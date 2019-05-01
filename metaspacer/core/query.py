@@ -34,7 +34,7 @@ class Query():
         for v in self.vs:
             if v.decl().name() in _vars:
                 vs.append(v)
-        self.query = Exists(vs, u)
+        self.query = Exists(vs, u[0])
 
     def update_query(self, text):
         """
