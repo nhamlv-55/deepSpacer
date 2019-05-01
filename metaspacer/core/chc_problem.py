@@ -6,7 +6,8 @@ class CHCProblem():
         self.rules = []
         self.predicates = set()
         self.all_var_sort = {}
-
+        if filename != None:
+            self.load(filename)
     def get_var_sort(self, f):
         """
         Given an expression, return a tuple of all sort
