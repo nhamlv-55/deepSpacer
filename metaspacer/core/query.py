@@ -1,16 +1,15 @@
 from z3 import *
-from chc_problem import CHCProblem
 class Query():
-    def __init__(self, chc = None, fp = None, query = None, text = None):
+    def __init__(self, chc = None, query = None, text = None):
         self.query = query
         self.chc = chc
-        self.fp = fp
+        self.fp = None
         self.text = text
         self.sorts = {}
         self.decls = {}
         self.vs = []
         if text!=None:
-            self.from_str(text)
+            self._from_str(text)
 
     def declare_undefined_vars(self, _vars):
         for v in _vars:
@@ -22,7 +21,7 @@ class Query():
 
 
 
-    def from_str(self, text):
+    def _from_str(self, text):
         tokens = text.split()
         _vars = set()
         for token in tokens:
@@ -36,6 +35,12 @@ class Query():
             if v.decl().name() in _vars:
                 vs.append(v)
         self.query = Exists(vs, u)
+
+    def update_query(self, text):
+        """
+        Wrapper around from_str
+        """
+        self._from_str(text)
 
     def create_fp(self):
         fp = Fixedpoint()
@@ -52,7 +57,6 @@ class Query():
             return self.fp.query(self.query)
         
         else:
-            print("solve query", self.query, "with fp", self.fp)
             self.create_fp()
             return self.fp.query(self.query)
 
@@ -62,6 +66,7 @@ class Query():
         print(self.text)
 
 if __name__ == "__main__":
+    from .chc_problem import CHCProblem
     chc = CHCProblem()
     chc.load('/home/nle/workspace/deepSpacer/chc-lia-0006.smt2')
     chc.dump()
