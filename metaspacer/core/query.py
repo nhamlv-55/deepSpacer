@@ -1,15 +1,16 @@
 from z3 import *
 class Query():
-    def __init__(self, chc = None, query = None, text = None):
-        self.query = query
+    def __init__(self, chc = None ):
         self.chc = chc
         self.fp = None
-        self.text = text
+        self.text = None
         self.sorts = {}
         self.decls = {}
         self.vs = []
-        if text!=None:
-            self._from_str(text)
+
+    def __del__(self):
+        del self.fp
+        
 
     def declare_undefined_vars(self, _vars):
         for v in _vars:
@@ -36,11 +37,6 @@ class Query():
                 vs.append(v)
         self.query = Exists(vs, u[0])
 
-    def update_query(self, text):
-        """
-        Wrapper around from_str
-        """
-        self._from_str(text)
 
     def create_fp(self):
         fp = Fixedpoint()
@@ -59,6 +55,10 @@ class Query():
         else:
             self.create_fp()
             return self.fp.query(self.query)
+
+    def execute(self, text, *args):
+        self._from_str(text)
+        return self.solve(*args), self.fp
 
     def dump(self):
         print(self.fp)
