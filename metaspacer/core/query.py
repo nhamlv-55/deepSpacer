@@ -48,7 +48,7 @@ class Query():
             fp.add_rule(r)
         self.fp = fp
 
-    def solve(self, *args):
+    def solve(self, params = None):
         if self.fp!=None:
             return self.fp.query(self.query)
         
@@ -56,9 +56,10 @@ class Query():
             self.create_fp()
             return self.fp.query(self.query)
 
-    def execute(self, text, *args):
+    def execute(self, text, params = None):
         self._from_str(text)
-        return self.solve(*args), self.fp
+        result = self.solve(params)
+        return result, self.fp
 
     def dump(self):
         print(self.fp)
