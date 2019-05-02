@@ -55,19 +55,24 @@ class Query():
         for k in z3_params:
             set_param(k, z3_params[k])
 
-    def solve(self, params = {}, z3_params = {}):
+    def solve(self, params, z3_params):
         if self.fp!=None:
-            self.set_params(params = params, z3_params = z3_params)
+            self.set_params(params, z3_params)
             return self.fp.query(self.query)
         
         else:
             self.create_fp()
-            self.set_params(params = params, z3_params = z3_params)
+            self.set_params(params, z3_params)
             return self.fp.query(self.query)
 
-    def execute(self, text, params = {}, z3_params = {}):
+    def execute_str(self, text, params = {}, z3_params = {}):
         self._from_str(text)
-        result = self.solve(params = params, z3_params = {})
+        result = self.solve(params, z3_params)
+        return result, self.fp
+
+    def execute_query(self, query, params = {}, z3_params = {}):
+        self.query = query
+        result = self.solve(params, z3_params)
         return result, self.fp
 
     def dump(self):
