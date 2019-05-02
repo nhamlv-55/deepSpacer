@@ -48,17 +48,26 @@ class Query():
             fp.add_rule(r)
         self.fp = fp
 
-    def solve(self, params = None):
+    def set_params(self, params, z3_params):
+        for k in params:
+            self.fp.set(k, params[k])
+            
+        for k in z3_params:
+            set_param(k, z3_params[k])
+
+    def solve(self, params = {}, z3_params = {}):
         if self.fp!=None:
+            self.set_params(params = params, z3_params = z3_params)
             return self.fp.query(self.query)
         
         else:
             self.create_fp()
+            self.set_params(params = params, z3_params = z3_params)
             return self.fp.query(self.query)
 
-    def execute(self, text, params = None):
+    def execute(self, text, params = {}, z3_params = {}):
         self._from_str(text)
-        result = self.solve(params)
+        result = self.solve(params = params, z3_params = {})
         return result, self.fp
 
     def dump(self):
