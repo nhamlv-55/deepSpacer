@@ -6,8 +6,10 @@ class CHCProblem():
         self.rules = []
         self.predicates = set()
         self.all_var_sort = {}
+        self.queries = []
         if filename != None:
             self.load(filename)
+        
     def get_var_sort(self, f):
         """
         Given an expression, return a tuple of all sort
@@ -23,12 +25,16 @@ class CHCProblem():
         for f in fs:
             print(f)
             # add predicates
-            predicate = f.body().arg(1).decl()
-            self.predicates.add(predicate)
+            predicate = f.body().arg(1)
+            self.predicates.add(predicate.decl())
             # add variables and sorts
-            self.all_var_sort[predicate.name()] = self.get_var_sort(f)
-
-        self.rules.extend(fs)
+            self.queries = []
+            self.all_var_sort[predicate.decl().name()] = self.get_var_sort(f)
+            # add queries. Queries are predicate with no argument
+            if predicate.num_args()==0:
+                self.queries.append(predicate)
+            # add rule
+            self.rules.append(f)
 
 
     def dump(self):
