@@ -65,15 +65,14 @@ class Query():
             self.set_params(params, z3_params)
             return self.fp.query(self.query)
 
-    def execute_str(self, text, params = {}, z3_params = {}):
-        self._from_str(text)
+    def execute(self, query, params = {}, z3_params = {}):
+        if isinstance(query, str):
+            self._from_str(query)
+        else:
+            self.query = query
         result = self.solve(params, z3_params)
         return result, self.fp
 
-    def execute_query(self, query, params = {}, z3_params = {}):
-        self.query = query
-        result = self.solve(params, z3_params)
-        return result, self.fp
 
     def dump(self):
         print(self.fp)
