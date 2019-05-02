@@ -4,7 +4,7 @@ class CHCProblem():
         self.filename = filename
         self.variables = set()
         self.rules = []
-        self.predicates = set()
+        self.predicates = []
         self.all_var_sort = {}
         self.queries = []
         if filename != None:
@@ -26,26 +26,26 @@ class CHCProblem():
             print(f)
             # add predicates
             predicate = f.body().arg(1)
-            self.predicates.add(predicate.decl())
+            self.predicates.append(predicate)
             # add variables and sorts
-            self.queries = []
             self.all_var_sort[predicate.decl().name()] = self.get_var_sort(f)
             # add queries. Queries are predicate with no argument
             if predicate.num_args()==0:
                 self.queries.append(predicate)
             # add rule
             self.rules.append(f)
-
+        print("=======DONE LOADING =======")
 
     def dump(self):
-        print(self.filename)
-        print(self.variables)
-        print(self.rules)
-        print(self.predicates)
-        print(self.all_var_sort)
+        print("filename:", self.filename)
+        print("variables:", self.variables)
+        print("rules:", self.rules)
+        print("predicates", self.predicates)
+        print("queries:", self.queries)
+        print("all_var_sort", self.all_var_sort)
 
 if __name__ == "__main__":
     chc = CHCProblem()
     chc.load('/home/nle/workspace/deepSpacer/chc-lia-0006.smt2')
     chc.dump()
-         
+    
