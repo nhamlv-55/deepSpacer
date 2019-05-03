@@ -1,0 +1,7 @@
+* TODO There's a border wall! 
+nodes near the edges are not clickable
+* TODO lemma / bad state boxes resizing
+auto-resize would be nice so I dont miss trailing bits
+* TODO extend json marshal 
+* TODO enable re-launch via visualizer  
+* TODO Ctrl-c clears .json (see spacer_json.cpp)
