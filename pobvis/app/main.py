@@ -1,4 +1,5 @@
-from flask import Flask, send_from_directory, jsonify
+from flask import Flask, send_from_directory, jsonify, request
+import json
 from z3 import *
 open_log('/tmp/z3log')
 import metaspacer as ms
@@ -7,25 +8,30 @@ app = Flask(__name__)
 
 @app.route("/home/")
 def home():
+
     return send_from_directory('static', 'index.html')
 
+@app.route('/static/<path:path>')
+def send_json(path):
+    return send_from_directory('static', path)
 
 
 
+@app.route("/execute_file/", methods = ["POST"])
+def execute_file():
+    print(request.form)
+    filename = request.form["filename"]
+    query = request.form["query_text"]
+    params = json.loads(request.form["params"])
+    time = "Now"
+    params["spacer.print_json"] = "static/"+filename + "." + time + ".json"
+    chc = ms.load('../../benchmarks/chc-comp18-benchmarks/lia/'+filename, type='smt2')
+    q = ms.Query(chc)
+    if query=="":
+        query = chc.queries[0]
+    res, _ = q.execute(query, params = params)
+    return jsonify(result = str(res), json_filename = params["spacer.print_json"])
 
 
-chc = ms.load('chc-lia-0006.smt2', type='smt2')
-q = ms.Query(chc)
-q.execute(q.chc.queries[0],
-         params={'spacer.max_level': 4,
-                 'xform.slice': False,
-                 'xform.inline_eager': False,
-                 'xform.inline_linear': False,
-                 })
-
-p = chc.predicates[0].decl()
-for i in range(0, q.fp.get_num_levels(p)):
-   print('Lemmas at level', i, 'of', p)
-   print(q.fp.get_cover_delta(i, p))
-print('Lemmas at oo of', p)
-print(q.fp.get_cover_delta(-1, p))
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", debug = True, port=8888)
