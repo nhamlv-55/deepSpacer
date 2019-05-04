@@ -23,7 +23,6 @@ class CHCProblem():
         self.filename = filename
         fs = parse_smt2_file(filename)
         for f in fs:
-            print(f)
             # add predicates
             predicate = f.body().arg(1)
             self.predicates.append(predicate)
