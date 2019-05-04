@@ -32,10 +32,6 @@ function load_json(path) {
                 interaction: {
                     dragNodes: false,
                     hover: true,
-                    keyboard: {
-                        enabled: true,
-                        speed: {x: 30, y: 30, zoom: 0.1} 
-                    }
                 },
                 layout: {
                     hierarchical: {
