@@ -71,8 +71,12 @@ class Query():
             return self.fp.query(self.query)
 
     def execute(self, query, params = {}, z3_params = {}):
+        self.query = None
         if isinstance(query, str):
-            self._from_str(query)
+            try:
+                self._from_str(query)
+            except Exception as e:
+                return e, self.fp
         else:
             self.query = query
         result = self.solve(params, z3_params)
