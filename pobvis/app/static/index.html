@@ -1,113 +1,140 @@
 <!doctype html>
 <html>
-<head>
-  <title>Spacer Visualization</title>
+    <head>
+        <title>Spacer Visualization</title>
+    </head>
+    <body>
+        <div id = "menu-container">
+            <input id="filename" type="text" value="chc-lia-0006.smt2"/>
+            <input id="level" type="text" value="5"/>
+            <div id = "query_editor"></div>
+            <div id = "formula_editor"> </div>
+            <textarea id="params" >{"spacer.max_level": 10}</textarea>
+            <label id="debug-message"></label>
+            <button type="button" onClick="execute_file()"> Execute</button>
 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-  <script type="text/javascript" src="/static/vis.min.js"></script>
-  <script type = "text/javascript" src="/static/main.js"></script>
-  <link type="text/css" rel="stylesheet" href="/static/vis.min.css" />
-  <script type="text/javascript">
-   function execute_file(){
-       var fd = new FormData();
-       var filename = document.getElementById("filename").value
-       var query_text = document.getElementById("query").value
-       var level = document.getElementById("level").value
+        </div>
+        <div id = "canvas-container">
+            <h1 id="name"></h1>
+            <div id="network"></div>
+            <textarea readonly id="expr_pob" class="expr"></textarea>
+            <textarea readonly id="expr_lemma" class="expr"></textarea>
+        </div>
+        
 
-       var params = document.getElementById("params").value
+    </body>
 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/vis.min.js"></script>
+    <script type = "text/javascript" src="/static/main.js"></script>
+    <script src="/static/ace-builds/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
 
-       fd.append('filename', filename)
-       fd.append('query_text', query_text)
-       fd.append('params', params)
-       fd.append('level' , parseInt(level))
+    <link type="text/css" rel="stylesheet" href="/static/vis.min.css" />
+    <script type="text/javascript">
+     var query_editor = ace.edit("query_editor");
+     query_editor.session.setMode("ace/mode/lisp");
+     query_editor.setOption("showLineNumbers", false);
+     query_editor.setOption("showGutter", false);
 
-       console.log(fd)
-       $.ajax({
-           type: 'POST',
-           url: '/execute_file/',
-           data: fd,
-           processData: false,
-           contentType: false,
-           error: function(jqXHR, textStatus, errorThrown){
-           }
-       }).done(function(data) {
-           console.log(data)
-           load_json(data["json_filename"])
-       });
+     var formula_editor = ace.edit("formula_editor");
+     formula_editor.session.setMode("ace/mode/lisp");
+     formula_editor.setOption("showLineNumbers", false);
+     formula_editor.setOption("showGutter", false);
 
-   }
- </script>
+     function execute_file(){
+         var fd = new FormData();
+         var filename = document.getElementById("filename").value
+         var query_text = query_editor.getValue();
+         var level = document.getElementById("level").value
 
- <style type="text/css">
-  #menu-container{
-      width: 200px;
-  }
-  #canvas-container{
-      position:absolute;
-      overflow:auto;
-      width: 90%;
-      height: 90%;
-      top: 0px;
-      left: 200px;
-  }
-  #network {
-    position: absolute;
-    top:0;
-      left:200px;
-      width:100%;
-      height:100%
-  }
-  #instances {
-    position: relative;
-    top:0;
-    right:0;
-    width: 15%;
-    height: 100%;
-    overflow: scroll;
-  }
-  .expr {
-    font-family: monospace;
-    display: none;
-    position: absolute;
-    border: 1px solid black;
-    width: 30%;
-    height: 20%;
-    overflow: auto;
-    white-space: pre;
-    background-color: white;
-    padding: .5em;
-    resize: both;
-  }
-   .prova{
-    resize: both;
-    overflow: auto;
-    width: 30%;
-    height: 20%;
-    border: 1px solid black;
-  }
-  #expr_pob{
-      top:0;
-  }
-  #expr_lemma{
-    bottom: 0;
-  }
-  </style>
-</head>
-<body>
-    <div id = "menu-container">
-      <textarea id="query"></textarea>
-      <input id="level" type="text" value="5"/>
-      <textarea id="params" >{"spacer.max_level": 4}</textarea>
-      <input id="filename" type="text" value="chc-lia-0006.smt2"/>
-      <button type="button" onClick="execute_file()"> Execute</button>
-  </div>
-  <div id = "canvas-container">
-      <h1 id="name"></h1>
-      <div id="network"></div>
-      <textarea readonly id="expr_pob" class="expr"></textarea>
-      <textarea readonly id="expr_lemma" class="expr"></textarea>
-  </div>
-  
+         var params = document.getElementById("params").value
+         var show_formula = true;
+         console.log(params);
 
-</body>
+         fd.append('filename', filename)
+         fd.append('query_text', query_text)
+         fd.append('params', params)
+         fd.append('level' , parseInt(level))
+         fd.append('show_formula', show_formula)
+         console.log(fd)
+         $.ajax({
+             type: 'POST',
+             url: '/execute_file/',
+             data: fd,
+             processData: false,
+             contentType: false,
+             error: function(jqXHR, textStatus, errorThrown){
+             }
+         }).done(function(data) {
+             console.log(data)
+             document.getElementById("debug-message").innerHTML = data["debug_mess"]
+             load_json(data["json_filename"])
+             if(data["formula"]){
+                 formula_editor.setValue(data["formula"])
+             }
+         });
+
+     }
+    </script>
+
+    <style type="text/css">
+     #menu-container{
+         width: 400px;
+     }
+     #canvas-container{
+         position:absolute;
+         overflow:auto;
+         width: 90%;
+         height: 90%;
+         top: 0px;
+         left: 400px;
+     }
+     #network {
+         position: absolute;
+         top:0;
+         width:100%;
+         height:100%
+     }
+     #instances {
+         position: relative;
+         top:0;
+         right:0;
+         width: 15%;
+         height: 100%;
+         overflow: scroll;
+     }
+     .expr {
+         font-family: monospace;
+         display: none;
+         position: absolute;
+         border: 1px solid black;
+         width: 30%;
+         height: 20%;
+         overflow: auto;
+         white-space: pre;
+         background-color: white;
+         padding: .5em;
+         resize: both;
+     }
+     .prova{
+         resize: both;
+         overflow: auto;
+         width: 30%;
+         height: 20%;
+         border: 1px solid black;
+     }
+     #expr_pob{
+         top:0;
+     }
+     #expr_lemma{
+         bottom: 0;
+     }
+     #query_editor { 
+         width:190px;
+         height:300px;
+     }
+     #formula_editor{
+         width: 300px;
+         min-height: 300px;
+     }
+    </style>
