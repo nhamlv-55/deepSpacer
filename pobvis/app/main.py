@@ -33,18 +33,20 @@ def execute_file():
     if query=="":
         query = chc.queries[0]
     res, _ = q.execute(query, params = params)
-    if isinstance(res, Exception):
-        debug_mess = str(res.value)
+    if isinstance(res, str):
+        debug_mess = res
+        json_filename = ""
     else:
         debug_mess = "ok"
+        json_filename = params["spacer.print_json"]
     if show_formula:
         print(folder+filename)
         with open(folder + filename, "r") as f:
             formula = f.read()
-        return jsonify(debug_mess = debug_mess, result = str(res), json_filename = params["spacer.print_json"], formula = formula)
+        return jsonify(debug_mess = debug_mess, result = str(res), json_filename = json_filename, formula = formula)
     else:
-        return jsonify(debug_mess = debug_mess, result = str(res), json_filename = params["spacer.print_json"])
+        return jsonify(debug_mess = debug_mess, result = str(res), json_filename = json_filename)
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8888)
+    app.run(host="0.0.0.0", debug = True, port=8888)
