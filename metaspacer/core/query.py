@@ -67,24 +67,24 @@ class Query():
         for k in z3_params:
             set_param(k, z3_params[k])
 
-    def solve(self, params, z3_params):
-        if self.fp!=None:
-            self.set_params(params, z3_params)
-            return self.fp.query(self.query)
-        
-        else:
+    def solve(self, level, params, z3_params):
+        if self.fp==None:
             self.create_fp()
-            self.set_params(params, z3_params)
+        self.set_params(params, z3_params)
+
+        if level>0:
+            return self.fp.query_from_lvl(level, self.query)
+        else:
             return self.fp.query(self.query)
 
-    def execute(self, query, params = {}, z3_params = {}):
+    def execute(self, query, level = -1, params = {}, z3_params = {}):
         self.query = None
         if isinstance(query, str):
             self._from_str(query)
         else:
             self.query = query
         if self.query!=None:
-            result = self.solve(params, z3_params)
+            result = self.solve(level, params, z3_params)
             print("fp:\n\t", self.fp)
             return result, self.fp
         else:

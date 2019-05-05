@@ -25,14 +25,14 @@ def execute_file():
     query = request.form["query_text"]
     show_formula = request.form["show_formula"]
     params = json.loads(request.form["params"])
-    
+    level = int(request.form["level"])
     time = "Now"
     params["spacer.print_json"] = "static/"+filename + "." + time + ".json"
     chc = ms.load(folder+filename, type='smt2')
     q = ms.Query(chc)
     if query=="":
         query = chc.queries[0]
-    res, _ = q.execute(query, params = params)
+    res, _ = q.execute(query, level = level, params = params)
     if isinstance(res, str):
         debug_mess = res
         json_filename = ""
