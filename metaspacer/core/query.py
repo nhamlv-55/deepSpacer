@@ -32,14 +32,21 @@ class Query():
                 _vars.add(token)
         self.declare_undefined_vars(_vars)
         print("(assert %s)"%text, self.sorts, self.decls)
-        u = parse_smt2_string("(assert %s)"%text, self.sorts, self.decls)
-        self.text = text
-        vs = set()
-        for v in self.vs:
-            if v.decl().name() in _vars:
-                vs.add(v)
-        self.query = Exists(list(vs), u[0])
-        print("query:", self.query)
+        u = None
+        try:
+            u = parse_smt2_string("(assert %s)"%text, self.sorts, self.decls)
+            self.text = text
+            vs = set()
+            for v in self.vs:
+                if v.decl().name() in _vars:
+                    vs.add(v)
+            self.query = Exists(list(vs), u[0])
+            print("query:", self.query)
+            return self.query
+        except Exception as e:
+            self.query = None
+            print("Exception in _parse_smt2_string", str(e))
+            return self.query
 
     def get_cover_delta(self, level, predicate):
         return self.fp.get_cover_delta(level, predicate)
@@ -73,15 +80,15 @@ class Query():
     def execute(self, query, params = {}, z3_params = {}):
         self.query = None
         if isinstance(query, str):
-            try:
-                self._from_str(query)
-            except Exception as e:
-                return e, self.fp
+            self._from_str(query)
         else:
             self.query = query
-        result = self.solve(params, z3_params)
-        print("fp:\n\t", self.fp)
-        return result, self.fp
+        if self.query!=None:
+            result = self.solve(params, z3_params)
+            print("fp:\n\t", self.fp)
+            return result, self.fp
+        else:
+            return "error", self.fp
 
 
     def dump(self):
