@@ -6,3 +6,5 @@
 benchmarks/
 *.json
 *.smt2
+z3/
+.z3-trace
