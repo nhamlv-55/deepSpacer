@@ -32,20 +32,21 @@ def execute_file():
     q = ms.Query(chc)
     if query=="":
         query = chc.queries[0]
-    res, _ = q.execute(query, level = level, params = params)
-    if isinstance(res, str):
-        debug_mess = res
-        json_filename = ""
-    else:
-        debug_mess = "ok"
+    try:
+        res, _ = q.execute(query, level = level, params = params)
         json_filename = params["spacer.print_json"]
+        status = "OK"
+    except Exception as e:
+        res = "error"
+        json_filename = ""
+        status = str(e)
     if show_formula:
         print(folder+filename)
         with open(folder + filename, "r") as f:
             formula = f.read()
-        return jsonify(debug_mess = debug_mess, result = str(res), json_filename = json_filename, formula = formula)
+        return jsonify(debug_mess = status, result = str(res), json_filename = json_filename, formula = formula)
     else:
-        return jsonify(debug_mess = debug_mess, result = str(res), json_filename = json_filename)
+        return jsonify(debug_mess = status, result = str(res), json_filename = json_filename)
 
 
 if __name__ == "__main__":

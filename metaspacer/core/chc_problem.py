@@ -21,6 +21,7 @@ class CHCProblem():
     
     def load(self, filename):
         self.filename = filename
+        print("im about to parse %s"%filename)
         fs = parse_smt2_file(filename)
         for f in fs:
             # add predicates
