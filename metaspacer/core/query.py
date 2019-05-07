@@ -37,7 +37,6 @@ class Query():
         result = "(and "
         for pred_name in _preds:
             pred_string = "("+pred_name
-            print(dir(self.chc.predicates[pred_name]))
             num_vars = self.chc.predicates[pred_name].arity()
             for i in range(num_vars):
                 pred_string = pred_string + " " + pred_name + "_" + str(i)+  "_n" 
