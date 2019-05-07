@@ -4,7 +4,7 @@ class CHCProblem():
         self.filename = filename
         self.variables = set()
         self.rules = []
-        self.predicates = []
+        self.predicates = {}
         self.all_var_sort = {}
         self.queries = []
         if filename != None:
@@ -26,11 +26,12 @@ class CHCProblem():
         for f in fs:
             # add predicates
             predicate = f.body().arg(1)
-            self.predicates.append(predicate)
+            self.predicates[predicate.decl().name()] = predicate.decl()
             # add variables and sorts
             self.all_var_sort[predicate.decl().name()] = self.get_var_sort(f)
             # add queries. Queries are predicate with no argument
             if predicate.num_args()==0:
+                print(predicate.sexpr())
                 self.queries.append(predicate)
             # add rule
             self.rules.append(f)
