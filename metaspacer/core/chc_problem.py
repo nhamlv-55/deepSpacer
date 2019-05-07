@@ -10,13 +10,13 @@ class CHCProblem():
         if filename != None:
             self.load(filename)
         
-    def get_var_sort(self, f):
+    def get_var_sort(self, predicate):
         """
         Given an expression, return a tuple of all sort
         """
         var_sort = []
-        for i in range(f.num_vars()):
-            var_sort.append(f.var_sort(i))
+        for i in range(predicate.num_args()):
+            var_sort.append(predicate.arg(i).sort())
         return tuple(var_sort)
     
     def load(self, filename):
@@ -28,7 +28,7 @@ class CHCProblem():
             predicate = f.body().arg(1)
             self.predicates[predicate.decl().name()] = predicate.decl()
             # add variables and sorts
-            self.all_var_sort[predicate.decl().name()] = self.get_var_sort(f)
+            self.all_var_sort[predicate.decl().name()] = self.get_var_sort(predicate)
             # add queries. Queries are predicate with no argument
             if predicate.num_args()==0:
                 print(predicate.sexpr())
