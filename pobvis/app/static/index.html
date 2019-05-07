@@ -7,7 +7,8 @@
         <div id = "menu-container">
             <input id="filename" type="text" value="chc-lia-0006.smt2"/></br>
             <input id="level" type="text" value="5"/></br>
-            <textarea id="params" >{"spacer.max_level": 10}</textarea>
+            <textarea id="params" >{"spacer.max_level": 10}</textarea></br>
+            <label>Hit Ctrl-Space to Execute</label></br>
             <div id = "query_editor"></div>
             <div id = "formula_editor"> </div>
             <label id="debug-message"></label>
@@ -35,7 +36,6 @@
      query_editor.session.setMode("ace/mode/lisp");
      query_editor.setOption("showLineNumbers", false);
      query_editor.setOption("showGutter", false);
-
      var formula_editor = ace.edit("formula_editor");
      formula_editor.session.setMode("ace/mode/lisp");
      formula_editor.setOption("showLineNumbers", false);
@@ -75,6 +75,12 @@
          });
 
      }
+
+     document.onkeyup = function(e) {
+         if (e.ctrlKey && e.keyCode == 32) {
+             execute_file();
+         }
+     };
     </script>
 
     <style type="text/css">
