@@ -12,34 +12,55 @@ class Query():
     def __del__(self):
         del self.fp
 
-    def _declare_undefined_vars(self, _vars):
-        for v in _vars:
-            predicate, idx, _ = v.split("_")
-            self.sorts[v] = self.chc.all_var_sort[predicate][int(idx)]
-            new_decl = Const(v, self.sorts[v])
-            self.decls[v] = new_decl.decl()
-            self.vs.append(new_decl)
+    def _declare_vars(self, _preds):
+        for pred_name in _preds:
+            num_vars = self.chc.predicates[pred_name].arity()
+            for idx in range(num_vars):
+                var_name = pred_name+"_"+str(idx)+"_n"
+                self.sorts[var_name] = self.chc.all_var_sort[pred_name][idx]
+                new_decl = Const(var_name, self.sorts[var_name])
+                self.decls[var_name] = new_decl.decl()
+                self.vs.append(new_decl)
         print(self.decls)
         print(self.vs)
+
+    def _append_predicate(self, text, _preds):
+        """
+        auto append all related predicates to the query string
+        e.g: itp is (itp Int Int Int Int)
+        (<= itp_0_n 8) ==> (and (itp itp_0_n itp_1_n itp_2_n itp_3_n)
+                                (<= itp_0_n 8)
+                           )
+        """
+        result = "(and "
+        for pred_name in _preds:
+            pred_string = "("+pred_name
+            print(dir(self.chc.predicates[pred_name]))
+            num_vars = self.chc.predicates[pred_name].arity()
+            for i in range(num_vars):
+                pred_string = pred_string + " " + pred_name + "_" + str(i)+  "_n" 
+            result += pred_string+")\n"
+        result += text + ")"
+        
+        return result
 
 
     def _from_str(self, text):
         tokens = tokenize(text)
         print("tokens:", tokens)
-        _vars = set()
         _preds = set()
         for token in tokens:
             if "_n" in token:
-                _vars.add(token)
-                
-        self._declare_undefined_vars(_vars)
+                pred_name, idx, _ = token.split("_")
+                _preds.add(pred_name)
+        self._declare_vars(_preds)
+        text = self._append_predicate(text, _preds)
         print("(assert %s)"%text, self.sorts, self.decls)
         u = parse_smt2_string("(assert %s)"%text, self.sorts, self.decls)
         self.text = text
         vs = set()
         for v in self.vs:
-            if v.decl().name() in _vars:
-                vs.add(v)
+            vs.add(v)
         self.query = Exists(list(vs), u[0])
         print("query:", self.query)
         return self.query
