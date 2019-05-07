@@ -12,7 +12,7 @@ class Query():
     def __del__(self):
         del self.fp
 
-    def declare_undefined_vars(self, _vars):
+    def _declare_undefined_vars(self, _vars):
         for v in _vars:
             predicate, idx, _ = v.split("_")
             self.sorts[v] = self.chc.all_var_sort[predicate][int(idx)]
@@ -27,10 +27,12 @@ class Query():
         tokens = tokenize(text)
         print("tokens:", tokens)
         _vars = set()
+        _preds = set()
         for token in tokens:
             if "_n" in token:
                 _vars.add(token)
-        self.declare_undefined_vars(_vars)
+                
+        self._declare_undefined_vars(_vars)
         print("(assert %s)"%text, self.sorts, self.decls)
         u = parse_smt2_string("(assert %s)"%text, self.sorts, self.decls)
         self.text = text
@@ -47,9 +49,9 @@ class Query():
 
     def create_fp(self):
         fp = Fixedpoint()
-        for p in self.chc.predicates:
-            fp.register_relation(p.decl())
-            self.decls[p.decl().name()] = p.decl()
+        for pred_name in self.chc.predicates:
+            fp.register_relation(self.chc.predicates[pred_name])
+            self.decls[pred_name] = self.chc.predicates[pred_name]
         for r in self.chc.rules:
             fp.add_rule(r)
         self.fp = fp
@@ -67,11 +69,14 @@ class Query():
         self.set_params(params, z3_params)
 
         if level>0:
+            print("call query_from_lvl from Query")
             return self.fp.query_from_lvl(level, self.query)
         else:
+            print("call query from Query")
             return self.fp.query(self.query)
 
     def execute(self, query, level = -1, params = {}, z3_params = {}):
+        print("call Query.execute")
         self.query = None
         if isinstance(query, str):
             self._from_str(query)
@@ -98,8 +103,9 @@ def tokenize(chars):
 if __name__ == "__main__":
     from .chc_problem import CHCProblem
     chc = CHCProblem()
-    chc.load('/home/nle/workspace/deepSpacer/chc-lia-0006.smt2')
+    chc.load('/home/nle/workspace/deepSpacer/chc-lia-0115.smt2')
     chc.dump()
-    q = Query(chc = chc, text = "( and (= itp_0_n 0) (> itp_1_n 1) )")
+    
+    q = Query(chc.queries[0])
     q.dump()
     print(q.solve())
