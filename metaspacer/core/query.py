@@ -14,15 +14,17 @@ class Query():
 
     def _declare_vars(self, _preds):
         for pred_name in _preds:
-            num_vars = self.chc.predicates[pred_name].arity()
-            for idx in range(num_vars):
+            print(pred_name)
+            arity = self.chc.predicates[pred_name].arity()
+            for idx in range(arity):
                 var_name = pred_name+"_"+str(idx)+"_n"
-                self.sorts[var_name] = self.chc.all_var_sort[pred_name][idx]
-                new_decl = Const(var_name, self.sorts[var_name])
-                self.decls[var_name] = new_decl.decl()
-                self.vs.append(new_decl)
-        print(self.decls)
-        print(self.vs)
+                if var_name not in self.sorts:
+                    self.sorts[var_name] = self.chc.all_var_sort[pred_name][idx]
+                    new_decl = Const(var_name, self.sorts[var_name])
+                    self.decls[var_name] = new_decl.decl()
+                    self.vs.append(new_decl)
+        print("self.decls:", self.decls)
+        print("self.vs:", self.vs)
 
     def _append_predicate(self, text, _preds):
         """
@@ -58,10 +60,7 @@ class Query():
         print("(assert %s)"%text, self.sorts, self.decls)
         u = parse_smt2_string("(assert %s)"%text, self.sorts, self.decls)
         self.text = text
-        vs = set()
-        for v in self.vs:
-            vs.add(v)
-        self.query = Exists(list(vs), u[0])
+        self.query = Exists(self.vs, u[0])
         print("query:", self.query)
         return self.query
 
@@ -94,6 +93,7 @@ class Query():
             return self.fp.query_from_lvl(level, self.query)
         else:
             print("call query from Query")
+            print("query:", self.query)
             return self.fp.query(self.query)
 
     def execute(self, query, level = -1, params = {}, z3_params = {}):
@@ -105,7 +105,6 @@ class Query():
             self.query = query
         if self.query!=None:
             result = self.solve(level, params, z3_params)
-            print("fp:\n\t", self.fp)
             return result, self.fp
         else:
             return "error", self.fp
