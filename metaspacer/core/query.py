@@ -9,8 +9,6 @@ class Query():
 
         self.fp = self.create_fp()
 
-    def __del__(self):
-        del self.fp
 
     def _declare_vars(self, _preds):
         for pred_name in _preds:
@@ -120,11 +118,11 @@ def tokenize(chars):
     return chars.replace('(', ' ( ').replace(')', ' ) ').split()
 
 if __name__ == "__main__":
-    from .chc_problem import CHCProblem
+    from chc_problem import CHCProblem
     chc = CHCProblem()
-    chc.load('/home/nle/workspace/deepSpacer/chc-lia-0115.smt2')
+    chc.load('/home/nv3le/workspace/deepSpacer/benchmarks/chc-comp18-benchmarks/lia/chc-lia-0006.smt2')
     chc.dump()
     
-    q = Query(chc.queries[0])
-    q.dump()
-    print(q.solve())
+    q = Query(chc)
+    print(q.fp)
+    print(q.execute(chc.queries[0], params = {"spacer.max_level": 10}))
