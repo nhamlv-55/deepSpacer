@@ -9,6 +9,8 @@ class Query():
 
         self.fp = self.create_fp()
 
+    def __del__(self):
+        del self.fp
 
     def _declare_vars(self, _preds):
         for pred_name in _preds:
