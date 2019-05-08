@@ -2,7 +2,6 @@ import z3
 class CHCProblem():
     def __init__(self, filename = None):
         self.filename = filename
-        self.variables = set()
         self.rules = []
         self.predicates = {}
         self.all_var_sort = {}
@@ -66,23 +65,25 @@ class CHCProblem():
         for f in fs:
             # add predicates
             predicate = f.body().arg(1)
-            if predicate.num_args()==0:
+            if predicate.decl().name()=='false':
+                print("is query")
                 print(predicate.sexpr())
                 vars, body = self._stripQuantifierBlock(f)
                 query = z3.Exists(vars, f.body().arg(0))
                 print("reconstructed query:", query)
                 self.queries.append(query)
             else:
+                print("f: ", f)
                 self.predicates[predicate.decl().name()] = predicate.decl()
                 # add variables and sorts
                 self.all_var_sort[predicate.decl().name()] = self.get_var_sort(predicate)
                 # add rule
                 self.rules.append(f)
         print("=======DONE LOADING =======")
+        self.dump()
 
     def dump(self):
         print("filename:", self.filename)
-        print("variables:", self.variables)
         print("rules:", self.rules)
         print("predicates", self.predicates)
         print("queries:", self.queries)
