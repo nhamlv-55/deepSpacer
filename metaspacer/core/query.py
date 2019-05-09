@@ -1,4 +1,5 @@
 from z3 import *
+import json
 class Query():
     def __init__(self, chc ):
         self.chc = chc
@@ -45,7 +46,25 @@ class Query():
         
         return result
 
-
+    def dump_lemmas(self, filename):
+        results = {}
+        for pred_name in self.chc.predicates:
+            results[pred_name] = []
+            pred = self.chc.predicates[pred_name]
+            for i in range(self.fp.get_num_levels(pred)):
+                print('Lemmas at level', i, 'of', pred)
+                lemma = self.fp.get_cover_delta(i, pred)
+                const_list = [Const(pred_name+"_"+str(j), pred.domain(j)) for j in range(pred.arity())]
+                lhs = pred(*const_list)
+                rhs = substitute_vars(lemma, *(const_list))
+                imp = Implies(lhs, rhs)
+                forall = ForAll(list(reversed(const_list)), imp)
+                lemma_str = "(assert %s)"%forall.sexpr()
+                results[pred_name].append(lemma_str)
+            print('Lemmas at infinity of', pred)
+            print(self.fp.get_cover_delta(-1, pred))
+        with open(filename, "w") as outstream: json.dump(results, outstream)
+        return results
     def _from_str(self, text):
         tokens = tokenize(text)
         print("tokens:", tokens)
@@ -127,4 +146,14 @@ if __name__ == "__main__":
     
     q = Query(chc)
     print(q.fp)
-    print(q.execute(chc.queries[0], params = {"spacer.max_level": 10}))
+    print(q.execute(chc.queries[0], params ={'spacer.max_level': 10,
+                 'xform.slice': False,
+                 'xform.inline_eager': False,
+                 'xform.inline_linear': False,
+                 }))
+    json_lemmas =  q.dump_lemmas("dump.json")
+    q2 = Query(chc)
+    a_lemma = json_lemmas["itp"][1]
+    print(a_lemma, "******")
+    a_lemma = parse_smt2_string(a_lemma, {}, {'itp': chc.predicates['itp']})
+    print(a_lemma)
