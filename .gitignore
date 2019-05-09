@@ -8,3 +8,4 @@ benchmarks/
 *.smt2
 z3/
 .z3-trace
+spacer_ref/
