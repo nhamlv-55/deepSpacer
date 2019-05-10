@@ -47,8 +47,6 @@ class Query():
         
         return result
 
-
-
     def dump_lemmas(self, filename):
         results = {}
         for pred_name in self.chc.predicates:
@@ -158,9 +156,8 @@ def tokenize(chars):
     return chars.replace('(', ' ( ').replace(')', ' ) ').split()
 
 if __name__ == "__main__":
-    from metaspacer.core.chc_problem import CHCProblem
-    chc = CHCProblem()
-    chc.load('/home/nv3le/workspace/deepSpacer/benchmarks/chc-comp18-benchmarks/lia/chc-lia-0006.smt2')
+    from metaspacer.core.chc_problem import *
+    chc = CHCProblem('/home/nv3le/workspace/deepSpacer/benchmarks/chc-comp18-benchmarks/lia/chc-lia-0006.smt2')
     chc.dump()
     
     q = Query(chc)
