@@ -31,32 +31,16 @@ class CHCProblem():
         assert qexpr.eq (expr)
         """
         if not z3.is_quantifier (expr) : return ([], expr)
-        z3ctx = expr.ctx
         consts = list ()
         # outside-in order of variables; z3 numbers variables inside-out but
         # substitutes outside-in
         for i in reversed (range (expr.num_vars ())) :
             v_name = expr.var_name (i)
             v_sort = expr.var_sort (i)
-            consts.append (z3.Const (v_name, self._z3_translate (v_sort, z3ctx)))
+            consts.append (z3.Const (v_name, v_sort))
         matrix = z3.substitute_vars (expr.body (), *consts)
         return (consts, matrix)
 
-    def _z3_translate (self, x, ctx):
-        """ A version of z3.AstRef.translate that handles sorts and function declarations correctly"""
-        if x.ctx == ctx: return x
-        if isinstance (x, z3.BoolSortRef): return z3.BoolSort (ctx)
-        if z3.is_arith_sort (x): 
-            if x.is_int (): return z3.IntSort (ctx)
-            else :
-                assert(x.is_real ())
-                return z3.RealSort (ctx)
-        if isinstance (x, z3.FuncDeclRef):
-            sorts = [z3_translate (x.domain (i), ctx) for i in range (decl.arity ())]
-            sorts.append (z3_translate (x.range (), ctx))
-            return z3.Function (x.name (), *sorts)
-
-        return x.translate (ctx)
 
     def load(self, filename):
         self.filename = filename
