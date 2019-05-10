@@ -1,4 +1,5 @@
 from z3 import *
+from metaspacer.utils import *
 import json
 class Query():
     def __init__(self, chc, lemma_file = None):
@@ -158,7 +159,6 @@ def tokenize(chars):
 
 if __name__ == "__main__":
     from metaspacer.core.chc_problem import CHCProblem
-    from metaspacer.utils import lemma_to_string
     chc = CHCProblem()
     chc.load('/home/nv3le/workspace/deepSpacer/benchmarks/chc-comp18-benchmarks/lia/chc-lia-0006.smt2')
     chc.dump()
