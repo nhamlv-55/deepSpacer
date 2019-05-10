@@ -1,14 +1,14 @@
 from z3 import *
 import json
 class Query():
-    def __init__(self, chc ):
+    def __init__(self, chc, lemma_file = None):
         self.chc = chc
         self.text = None
         self.sorts = {}
         self.decls = {}
         self.vs = []
 
-        self.create_fp()
+        self.create_fp(lemma_file = lemma_file)
 
     def __del__(self):
         del self.fp
@@ -99,17 +99,20 @@ class Query():
         print("query:", self.query)
         return self.query
 
-    def get_cover_delta(self, level, predicate):
-        return self.fp.get_cover_delta(level, predicate)
 
-    def create_fp(self):
+    def create_fp(self, lemma_file):
         print("call create_fp")
         self.fp = Fixedpoint()
+        self.fp.set('xform.slice', False,
+                    'xform.inline_eager', False,
+                    'xform.inline_linear', False)
         for pred_name in self.chc.predicates:
             self.fp.register_relation(self.chc.predicates[pred_name])
             self.decls[pred_name] = self.chc.predicates[pred_name]
         for r in self.chc.rules:
             self.fp.add_rule(r)
+        if lemma_file is not None:
+            self.load_lemmas(lemma_file)
 
     def set_params(self, params, z3_params):
         for k in params:
@@ -161,21 +164,14 @@ if __name__ == "__main__":
     chc.load('/home/nv3le/workspace/deepSpacer/benchmarks/chc-comp18-benchmarks/lia/chc-lia-0006.smt2')
     chc.dump()
     
-#    q = Query(chc)
+    q = Query(chc)
 #    print(q.fp)
-#    print(q.execute(chc.queries[0], params ={'spacer.max_level': 10,
-#                 'xform.slice': False,
-#                 'xform.inline_eager': False,
-#                 'xform.inline_linear': False,
-#                 }))
-#    json_lemmas =  q.dump_lemmas("dump.json")
-#    a_lemma = json_lemmas["itp"][1]
-#    print(a_lemma, "******")
-#    a_lemma = parse_smt2_string(a_lemma, {}, {'itp': chc.predicates['itp']})
-#    print(a_lemma)
+    q.execute(chc.queries[0], params ={'spacer.max_level': 10})
+    json_lemmas =  q.dump_lemmas("dump.json")
 
     q2 = Query(chc)
-    q2.fp.set("xform.slice", False)
-    print("****", q2.fp)
     q2.load_lemmas("dump.json")
-    print(q2.fp.get_cover_delta(1, chc.predicates['itp']))
+    print("q2.1:\n",q2.fp.get_cover_delta(1, chc.predicates['itp']))
+
+    q3 = Query(chc, lemma_file = "dump.json")
+    print("q3.2:\n", q3.fp.get_cover_delta(2, chc.predicates['itp']))
