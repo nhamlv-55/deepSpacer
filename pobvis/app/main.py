@@ -28,7 +28,7 @@ def execute_file():
     level = int(request.form["level"])
     time = "Now"
     params["spacer.print_json"] = "static/"+filename + "." + time + ".json"
-    chc = ms.load(folder+filename, type='smt2')
+    chc = ms.CHCProblem(folder+filename)
     q = ms.Query(chc)
     if query=="":
         query = chc.queries[0]
@@ -50,4 +50,4 @@ def execute_file():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug = True, port=8888)
+    app.run(host="0.0.0.0", debug = False, port=8888)
