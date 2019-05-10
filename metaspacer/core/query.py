@@ -46,6 +46,16 @@ class Query():
         
         return result
 
+
+    def _lemma_to_string(self, lemma, pred):
+        const_list = [Const(pred.name()+"_"+str(j), pred.domain(j)) for j in range(pred.arity())]
+        lhs = pred(*const_list)
+        rhs = substitute_vars(lemma, *(const_list))
+        imp = Implies(lhs, rhs)
+        forall = ForAll(list(reversed(const_list)), imp)
+        lemma_str = "(assert %s)"%forall.sexpr()
+        return lemma_str
+
     def dump_lemmas(self, filename):
         results = {}
         for pred_name in self.chc.predicates:
@@ -54,17 +64,11 @@ class Query():
             for i in range(self.fp.get_num_levels(pred)):
                 print('Lemmas at level', i, 'of', pred)
                 lemma = self.fp.get_cover_delta(i, pred)
-                const_list = [Const(pred_name+"_"+str(j), pred.domain(j)) for j in range(pred.arity())]
-                lhs = pred(*const_list)
-                rhs = substitute_vars(lemma, *(const_list))
-                imp = Implies(lhs, rhs)
-                forall = ForAll(list(reversed(const_list)), imp)
-                lemma_str = "(assert %s)"%forall.sexpr()
+                lemma_str = self._lemma_to_string(lemma, pred)
                 results[pred_name].append(lemma_str)
-            #TODO: parse lemma at -1
-            print('Lemmas at infinity of', pred)
-            print(self.fp.get_cover_delta(-1, pred))
-            results[pred_name].append("something")
+            lemma_oo = self.fp.get_cover_delta(-1, pred)
+            lemma_oo_string = self._lemma_to_string(lemma_oo, pred)
+            results[pred_name].append(lemma_oo_string)
         with open(filename, "w") as outstream: json.dump(results, outstream)
         return results
 
@@ -80,7 +84,9 @@ class Query():
 
                 property = assertion.body().arg(1)
                 self.fp.add_cover(i, self.chc.predicates[pred_name], property)
-
+            assertion_oo = parse_smt2_string(lemmas[-1], {}, {pred_name: self.chc.predicates[pred_name]})
+            property_oo = assertion.body().arg(1)
+            self.fp.add_cover(-1, self.chc.predicates[pred_name], property_oo)
 
     def _from_str(self, text):
         tokens = tokenize(text)
