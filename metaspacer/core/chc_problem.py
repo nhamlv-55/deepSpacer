@@ -1,4 +1,5 @@
 import z3
+from metaspacer.utils import *
 class CHCProblem():
     def __init__(self, filename = None):
         self.filename = filename
@@ -18,29 +19,6 @@ class CHCProblem():
             var_sort.append(predicate.arg(i).sort())
         return tuple(var_sort)
 
-    def _stripQuantifierBlock (self, expr) :
-        """ strips the outermost quantifier block in a given expression and returns
-        the pair (<list of consts replacing free vars>,
-        <body with consts substituted for de-bruijn variables>)
-
-        Example:
-
-        assume expr.is_forall ()
-        vars, body = strip_quantifier (expr)
-        qexpr = z3.ForAll (vars, body)
-        assert qexpr.eq (expr)
-        """
-        if not z3.is_quantifier (expr) : return ([], expr)
-        consts = list ()
-        # outside-in order of variables; z3 numbers variables inside-out but
-        # substitutes outside-in
-        for i in reversed (range (expr.num_vars ())) :
-            v_name = expr.var_name (i)
-            v_sort = expr.var_sort (i)
-            consts.append (z3.Const (v_name, v_sort))
-        matrix = z3.substitute_vars (expr.body (), *consts)
-        return (consts, matrix)
-
 
     def load(self, filename):
         self.filename = filename
@@ -52,7 +30,7 @@ class CHCProblem():
             if predicate.decl().name()=='false':
                 print("is query")
                 print(predicate.sexpr())
-                vars, body = self._stripQuantifierBlock(f)
+                vars, body = stripQuantifierBlock(f)
                 query = z3.Exists(vars, f.body().arg(0))
                 print("reconstructed query:", query)
                 self.queries.append(query)
