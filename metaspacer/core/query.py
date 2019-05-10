@@ -75,8 +75,8 @@ class Query():
 
                 property = assertion.body().arg(1)
                 self.fp.add_cover(i, self.chc.predicates[pred_name], property)
-            assertion_oo = parse_smt2_string(lemmas[-1], {}, {pred_name: self.chc.predicates[pred_name]})
-            property_oo = assertion.body().arg(1)
+            assertion_oo = parse_smt2_string(lemmas[-1], {}, {pred_name: self.chc.predicates[pred_name]})[0]
+            property_oo = assertion_oo.body().arg(1)
             self.fp.add_cover(-1, self.chc.predicates[pred_name], property_oo)
 
     def _from_str(self, text):
