@@ -47,14 +47,6 @@ class Query():
         return result
 
 
-    def _lemma_to_string(self, lemma, pred):
-        const_list = [Const(pred.name()+"_"+str(j), pred.domain(j)) for j in range(pred.arity())]
-        lhs = pred(*const_list)
-        rhs = substitute_vars(lemma, *(const_list))
-        imp = Implies(lhs, rhs)
-        forall = ForAll(list(reversed(const_list)), imp)
-        lemma_str = "(assert %s)"%forall.sexpr()
-        return lemma_str
 
     def dump_lemmas(self, filename):
         results = {}
@@ -64,10 +56,10 @@ class Query():
             for i in range(self.fp.get_num_levels(pred)):
                 print('Lemmas at level', i, 'of', pred)
                 lemma = self.fp.get_cover_delta(i, pred)
-                lemma_str = self._lemma_to_string(lemma, pred)
+                lemma_str = lemma_to_string(lemma, pred)
                 results[pred_name].append(lemma_str)
             lemma_oo = self.fp.get_cover_delta(-1, pred)
-            lemma_oo_string = self._lemma_to_string(lemma_oo, pred)
+            lemma_oo_string = lemma_to_string(lemma_oo, pred)
             results[pred_name].append(lemma_oo_string)
         with open(filename, "w") as outstream: json.dump(results, outstream)
         return results
@@ -165,7 +157,8 @@ def tokenize(chars):
     return chars.replace('(', ' ( ').replace(')', ' ) ').split()
 
 if __name__ == "__main__":
-    from chc_problem import CHCProblem
+    from metaspacer.core.chc_problem import CHCProblem
+    from metaspacer.utils import lemma_to_string
     chc = CHCProblem()
     chc.load('/home/nv3le/workspace/deepSpacer/benchmarks/chc-comp18-benchmarks/lia/chc-lia-0006.smt2')
     chc.dump()
