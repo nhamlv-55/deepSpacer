@@ -1,9 +1,4 @@
 import z3
-def load(filename, type = None):
-    chc = CHCProblem()
-    if type=="smt2":
-        chc.load(filename)
-    return chc
 
 def lemma_to_string(lemma, pred):
     """
