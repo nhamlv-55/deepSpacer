@@ -8,7 +8,7 @@ class Query():
         self.decls = {}
         self.vs = []
 
-        self.fp = self.create_fp()
+        self.create_fp()
 
     def __del__(self):
         del self.fp
@@ -61,10 +61,27 @@ class Query():
                 forall = ForAll(list(reversed(const_list)), imp)
                 lemma_str = "(assert %s)"%forall.sexpr()
                 results[pred_name].append(lemma_str)
+            #TODO: parse lemma at -1
             print('Lemmas at infinity of', pred)
             print(self.fp.get_cover_delta(-1, pred))
+            results[pred_name].append("something")
         with open(filename, "w") as outstream: json.dump(results, outstream)
         return results
+
+    def load_lemmas(self, filename):
+        print("loading lemmas from %s into query.fp"%filename)
+        with open(filename, "r") as instream: d = json.load(instream)
+        for pred_name in d:
+            lemmas = d[pred_name]
+            for i in range(len(lemmas)-1):
+                assertion = parse_smt2_string(lemmas[i], {}, {pred_name: self.chc.predicates[pred_name]})[0]
+                print("adding:", assertion.body().arg(1))
+
+
+                property = assertion.body().arg(1)
+                self.fp.add_cover(i, self.chc.predicates[pred_name], property)
+
+
     def _from_str(self, text):
         tokens = tokenize(text)
         print("tokens:", tokens)
@@ -86,13 +103,13 @@ class Query():
         return self.fp.get_cover_delta(level, predicate)
 
     def create_fp(self):
-        fp = Fixedpoint()
+        print("call create_fp")
+        self.fp = Fixedpoint()
         for pred_name in self.chc.predicates:
-            fp.register_relation(self.chc.predicates[pred_name])
+            self.fp.register_relation(self.chc.predicates[pred_name])
             self.decls[pred_name] = self.chc.predicates[pred_name]
         for r in self.chc.rules:
-            fp.add_rule(r)
-        self.fp = fp
+            self.fp.add_rule(r)
 
     def set_params(self, params, z3_params):
         for k in params:
@@ -144,16 +161,21 @@ if __name__ == "__main__":
     chc.load('/home/nv3le/workspace/deepSpacer/benchmarks/chc-comp18-benchmarks/lia/chc-lia-0006.smt2')
     chc.dump()
     
-    q = Query(chc)
-    print(q.fp)
-    print(q.execute(chc.queries[0], params ={'spacer.max_level': 10,
-                 'xform.slice': False,
-                 'xform.inline_eager': False,
-                 'xform.inline_linear': False,
-                 }))
-    json_lemmas =  q.dump_lemmas("dump.json")
+#    q = Query(chc)
+#    print(q.fp)
+#    print(q.execute(chc.queries[0], params ={'spacer.max_level': 10,
+#                 'xform.slice': False,
+#                 'xform.inline_eager': False,
+#                 'xform.inline_linear': False,
+#                 }))
+#    json_lemmas =  q.dump_lemmas("dump.json")
+#    a_lemma = json_lemmas["itp"][1]
+#    print(a_lemma, "******")
+#    a_lemma = parse_smt2_string(a_lemma, {}, {'itp': chc.predicates['itp']})
+#    print(a_lemma)
+
     q2 = Query(chc)
-    a_lemma = json_lemmas["itp"][1]
-    print(a_lemma, "******")
-    a_lemma = parse_smt2_string(a_lemma, {}, {'itp': chc.predicates['itp']})
-    print(a_lemma)
+    q2.fp.set("xform.slice", False)
+    print("****", q2.fp)
+    q2.load_lemmas("dump.json")
+    print(q2.fp.get_cover_delta(1, chc.predicates['itp']))
