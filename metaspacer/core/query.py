@@ -2,15 +2,18 @@ from z3 import *
 from metaspacer.utils import *
 import json
 class Query():
-    def __init__(self, chc, lemma_file = None):
+    def __init__(self, chc, lemmas_file = None, params = {}, z3_params = {}):
         self.chc = chc
         self.text = None
         self.sorts = {}
         self.decls = {}
         self.vs = []
 
-        self.create_fp(lemma_file = lemma_file)
-
+        self.create_fp()
+        self.set_params(params, z3_params)
+        if lemmas_file is not None:
+            self.load_lemmas(lemmas_file)
+        self.query = None
     def __del__(self):
         del self.fp
 
@@ -47,7 +50,7 @@ class Query():
         
         return result
 
-    def dump_lemmas(self, filename):
+    def dump_lemmas(self, filename = None):
         results = {}
         for pred_name in self.chc.predicates:
             results[pred_name] = []
@@ -61,7 +64,8 @@ class Query():
             lemma_oo_string = lemma_to_string(lemma_oo, pred)
             print("Always true:", lemma_oo_string)
             results[pred_name].append(lemma_oo_string)
-        with open(filename, "w") as outstream: json.dump(results, outstream)
+        if filename is not None:
+            with open(filename, "w") as outstream: json.dump(results, outstream)
         return results
 
     def load_lemmas(self, filename):
@@ -99,7 +103,7 @@ class Query():
         return self.query
 
 
-    def create_fp(self, lemma_file):
+    def create_fp(self):
         print("call create_fp")
         self.fp = Fixedpoint()
         self.fp.set('xform.slice', False,
@@ -110,8 +114,6 @@ class Query():
             self.decls[pred_name] = self.chc.predicates[pred_name]
         for r in self.chc.rules:
             self.fp.add_rule(r)
-        if lemma_file is not None:
-            self.load_lemmas(lemma_file)
 
     def set_params(self, params, z3_params):
         for k in params:
@@ -120,9 +122,9 @@ class Query():
         for k in z3_params:
             set_param(k, z3_params[k])
 
-    def solve(self, level, params, z3_params):
-        self.set_params(params, z3_params)
-
+    def solve(self, level):
+        print("dump internal lemmas before solving")
+        self.dump_lemmas()
         if level>0:
             print("call query_from_lvl from Query")
             return self.fp.query_from_lvl(level, self.query)
@@ -131,15 +133,14 @@ class Query():
             print("query:", self.query)
             return self.fp.query(self.query)
 
-    def execute(self, query, level = -1, params = {}, z3_params = {}):
+    def execute(self, query, level = -1):
         print("call Query.execute")
-        self.query = None
         if isinstance(query, str):
             self._from_str(query)
         else:
             self.query = query
-        if self.query!=None:
-            result = self.solve(level, params, z3_params)
+        if self.query is not None:
+            result = self.solve(level)
             return result, self.fp
         else:
             return "error", self.fp
@@ -157,24 +158,29 @@ def tokenize(chars):
 
 if __name__ == "__main__":
     from metaspacer.core.chc_problem import *
-    chc = CHCProblem('/home/nv3le/workspace/deepSpacer/benchmarks/chc-comp18-benchmarks/lia/chc-lia-0006.smt2')
-    chc.dump()
+    chc = CHCProblem('/home/nv3le/workspace/deepSpacer/benchmarks/chc-comp18-benchmarks/lia/yusuke.smt2')
+#    chc.dump()
     
-    q = Query(chc)
+#    q = Query(chc)
 #    print(q.fp)
 #    q.execute(chc.queries[0], params ={'spacer.max_level': 10})
-    res, _ = q.execute("( or (< itp_0_n 0) (< itp_1_n 0) (< itp_2_n 0) (< itp_3_n 0))")
-    print(res)
-    q1_lemmas =  q.dump_lemmas("dump.json")
-    print("q1 lemmas:==================")
-    print(json.dumps(q1_lemmas, indent=4, sort_keys=True))
+#    res, _ = q.execute("( or (< itp_0_n 0) (< itp_1_n 0) (< itp_2_n 0) (< itp_3_n 0))")
+#    print(res)
+#    q1_lemmas =  q.dump_lemmas("dump.json")
+#    print("q1 lemmas:==================")
+#    print(json.dumps(q1_lemmas, indent=4, sort_keys=True))
 
-    q2 = Query(chc)
-    q2.load_lemmas("dump.json")
+    q2 = Query(chc, lemmas_file = '../../pobvis/app/Now_yusuke.smt2_0to10.json')
+    q2_lemmas = q2.dump_lemmas("/tmp/throwaway.json")
+
+#    q2.fp.set('spacer.max_level', 10)
+    q2.fp.set('spacer.print_json', "../../pobvis/yusuke.json")
+    q2.load_lemmas('../../pobvis/app/Now_yusuke.smt2_0to10.json')
+    res = q2.fp.query(chc.queries[0])
     q2_lemmas = q2.dump_lemmas("/tmp/throwaway.json")
     print("q2 lemmas:==================")
     print(json.dumps(q2_lemmas, indent=4, sort_keys=True))
-    
-    res, _ = q2.execute(chc.queries[0])
+
+   
     print(res)
 
