@@ -7,6 +7,7 @@
         <div id = "menu-container">
             <input id="filename" type="text" value="chc-lia-0006.smt2"/></br>
             <input id="level" type="text" value="5"/></br>
+            <input id="lemmas-file" type="text" value=""/></br>
             <textarea id="params" >{"spacer.max_level": 4,
 "xform.slice": false,
 "xform.inline_eager": false,
@@ -15,7 +16,8 @@
             <label>Hit Ctrl-Space to Execute</label></br>
             <div id = "query_editor"></div>
             <div id = "formula_editor"> </div>
-            <label id="debug-message"></label>
+            <label id="debug-message"></label></br>
+            <label id="result"></label></br>
             <button type="button" onClick="execute_file()"> Execute</button>
 
         </div>
@@ -53,6 +55,8 @@
 
          var params = document.getElementById("params").value
          var show_formula = true;
+         var interactive = true;
+         var lemmas_file = document.getElementById("lemmas-file").value
          console.log(params);
 
          fd.append('filename', filename)
@@ -60,6 +64,8 @@
          fd.append('params', params)
          fd.append('level' , parseInt(level))
          fd.append('show_formula', show_formula)
+         fd.append('interactive', interactive)
+         fd.append('lemmas_file', lemmas_file)
          console.log(fd)
          $.ajax({
              type: 'POST',
@@ -72,6 +78,8 @@
          }).done(function(data) {
              console.log(data)
              document.getElementById("debug-message").innerHTML = data["debug_mess"]
+             document.getElementById("result").innerHTML = data["result"]
+             document.getElementById("lemmas-file").value = data["lemmas_file"]
              load_json(data["json_filename"])
              if(data["formula"]){
                  formula_editor.setValue(data["formula"], -1)
