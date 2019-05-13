@@ -59,6 +59,7 @@ class Query():
                 results[pred_name].append(lemma_str)
             lemma_oo = self.fp.get_cover_delta(-1, pred)
             lemma_oo_string = lemma_to_string(lemma_oo, pred)
+            print("Always true:", lemma_oo_string)
             results[pred_name].append(lemma_oo_string)
         with open(filename, "w") as outstream: json.dump(results, outstream)
         return results
@@ -75,8 +76,10 @@ class Query():
 
                 property = assertion.body().arg(1)
                 self.fp.add_cover(i, self.chc.predicates[pred_name], property)
+            #add lemmas at level -1
             assertion_oo = parse_smt2_string(lemmas[-1], {}, {pred_name: self.chc.predicates[pred_name]})[0]
             property_oo = assertion_oo.body().arg(1)
+            print("adding:", property_oo)
             self.fp.add_cover(-1, self.chc.predicates[pred_name], property_oo)
 
     def _from_str(self, text):
@@ -93,7 +96,6 @@ class Query():
         u = parse_smt2_string("(assert %s)"%text, self.sorts, self.decls)
         self.text = text
         self.query = Exists(self.vs, u[0])
-        print("query:", self.query)
         return self.query
 
 
@@ -119,8 +121,6 @@ class Query():
             set_param(k, z3_params[k])
 
     def solve(self, level, params, z3_params):
-        if self.fp==None:
-            self.create_fp()
         self.set_params(params, z3_params)
 
         if level>0:
@@ -162,12 +162,19 @@ if __name__ == "__main__":
     
     q = Query(chc)
 #    print(q.fp)
-    q.execute(chc.queries[0], params ={'spacer.max_level': 10})
-    json_lemmas =  q.dump_lemmas("dump.json")
+#    q.execute(chc.queries[0], params ={'spacer.max_level': 10})
+    res, _ = q.execute("( or (< itp_0_n 0) (< itp_1_n 0) (< itp_2_n 0) (< itp_3_n 0))")
+    print(res)
+    q1_lemmas =  q.dump_lemmas("dump.json")
+    print("q1 lemmas:==================")
+    print(json.dumps(q1_lemmas, indent=4, sort_keys=True))
 
     q2 = Query(chc)
     q2.load_lemmas("dump.json")
-    print("q2.1:\n",q2.fp.get_cover_delta(1, chc.predicates['itp']))
+    q2_lemmas = q2.dump_lemmas("/tmp/throwaway.json")
+    print("q2 lemmas:==================")
+    print(json.dumps(q2_lemmas, indent=4, sort_keys=True))
+    
+    res, _ = q2.execute(chc.queries[0])
+    print(res)
 
-    q3 = Query(chc, lemma_file = "dump.json")
-    print("q3.2:\n", q3.fp.get_cover_delta(2, chc.predicates['itp']))
