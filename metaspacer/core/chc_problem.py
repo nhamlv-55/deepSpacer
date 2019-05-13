@@ -31,7 +31,7 @@ class CHCProblem():
                 print("is query")
                 print(predicate.sexpr())
                 vars, body = stripQuantifierBlock(f)
-                query = z3.Exists(vars, f.body().arg(0))
+                query = z3.Exists(list(reversed(vars)), f.body().arg(0))
                 print("reconstructed query:", query)
                 self.queries.append(query)
             else:
