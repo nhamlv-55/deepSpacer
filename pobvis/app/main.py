@@ -55,9 +55,9 @@ def execute_file():
         print(folder+filename)
         with open(folder + filename, "r") as f:
             formula = f.read()
-        return jsonify(debug_mess = status, result = str(res), json_filename = json_filename, formula = formula, lemmas_file = lemmas_file)
+        return jsonify(debug_mess = status, result = str(res), json_filename = json_filename, formula = formula, lemmas_file = lemmas_file, internal_lemmas = q.lemmas)
     else:
-        return jsonify(debug_mess = status, result = str(res), json_filename = json_filename, lemmas_file = lemmas_file)
+        return jsonify(debug_mess = status, result = str(res), json_filename = json_filename, lemmas_file = lemmas_file, internal_lemmas = q.lemmas)
 
 
 if __name__ == "__main__":

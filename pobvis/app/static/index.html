@@ -13,6 +13,7 @@
 "xform.inline_eager": false,
 "xform.inline_linear": false}
             </textarea></br>
+            <textarea id="internal-lemmas" name=""></textarea></br>
             <label>Hit Ctrl-Space to Execute</label></br>
             <div id = "query_editor"></div>
             <div id = "formula_editor"> </div>
@@ -80,6 +81,7 @@
              document.getElementById("debug-message").innerHTML = data["debug_mess"]
              document.getElementById("result").innerHTML = data["result"]
              document.getElementById("lemmas-file").value = data["lemmas_file"]
+             document.getElementById("internal-lemmas").value = JSON.stringify(data["internal_lemmas"], null, 2)
              load_json(data["json_filename"])
              if(data["formula"]){
                  formula_editor.setValue(data["formula"], -1)
