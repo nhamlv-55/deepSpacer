@@ -8,6 +8,7 @@ class Query():
         self.sorts = {}
         self.decls = {}
         self.vs = []
+        self.lemmas = None
 
         self.create_fp()
         self.set_params(params, z3_params)
@@ -53,38 +54,38 @@ class Query():
     def dump_lemmas(self, filename = None):
         results = {}
         for pred_name in self.chc.predicates:
-            results[pred_name] = []
+            results[pred_name] = {}
             pred = self.chc.predicates[pred_name]
             for i in range(self.fp.get_num_levels(pred)):
                 print('Lemmas at level', i, 'of', pred)
                 lemma = self.fp.get_cover_delta(i, pred)
                 lemma_str = lemma_to_string(lemma, pred)
-                results[pred_name].append(lemma_str)
+                print(lemma_str)
+                results[pred_name][str(i)] = lemma_str
             lemma_oo = self.fp.get_cover_delta(-1, pred)
             lemma_oo_string = lemma_to_string(lemma_oo, pred)
             print("Always true:", lemma_oo_string)
-            results[pred_name].append(lemma_oo_string)
+            results[pred_name]["-1"] = lemma_oo_string
         if filename is not None:
-            with open(filename, "w") as outstream: json.dump(results, outstream)
+            with open(filename, "w") as outstream: json.dump(results, outstream, indent = 4, sort_keys = True)
+        self.lemmas = results
         return results
 
     def load_lemmas(self, filename):
         print("loading lemmas from %s into query.fp"%filename)
         with open(filename, "r") as instream: d = json.load(instream)
+        self.lemmas = d
         for pred_name in d:
             lemmas = d[pred_name]
-            for i in range(len(lemmas)-1):
-                assertion = parse_smt2_string(lemmas[i], {}, {pred_name: self.chc.predicates[pred_name]})[0]
-                print("adding:", assertion.body().arg(1))
-
-
+            for k in lemmas:
+                if k == "-1":
+                    print("adding Always true:",)
+                else:
+                    print("adding lemmas at level%s:"%k,)
+                assertion = parse_smt2_string(lemmas[k], {}, {pred_name: self.chc.predicates[pred_name]})[0]
+                print(assertion.body().arg(1))
                 property = assertion.body().arg(1)
-                self.fp.add_cover(i, self.chc.predicates[pred_name], property)
-            #add lemmas at level -1
-            assertion_oo = parse_smt2_string(lemmas[-1], {}, {pred_name: self.chc.predicates[pred_name]})[0]
-            property_oo = assertion_oo.body().arg(1)
-            print("adding:", property_oo)
-            self.fp.add_cover(-1, self.chc.predicates[pred_name], property_oo)
+                self.fp.add_cover(int(k), self.chc.predicates[pred_name], property)
 
     def _from_str(self, text):
         tokens = tokenize(text)
@@ -123,8 +124,6 @@ class Query():
             set_param(k, z3_params[k])
 
     def solve(self, level):
-        print("dump internal lemmas before solving")
-        self.dump_lemmas()
         if level>0:
             print("call query_from_lvl from Query")
             return self.fp.query_from_lvl(level, self.query)
@@ -139,8 +138,12 @@ class Query():
             self._from_str(query)
         else:
             self.query = query
+        print(">>>>>>>>>>>>>>>>>>>>>dump internal lemmas before solving")
+        self.dump_lemmas()
         if self.query is not None:
             result = self.solve(level)
+            print("dump internal lemmas after solving")
+            self.dump_lemmas()
             return result, self.fp
         else:
             return "error", self.fp
@@ -158,29 +161,24 @@ def tokenize(chars):
 
 if __name__ == "__main__":
     from metaspacer.core.chc_problem import *
-    chc = CHCProblem('/home/nv3le/workspace/deepSpacer/benchmarks/chc-comp18-benchmarks/lia/yusuke.smt2')
+    chc = CHCProblem('/home/nv3le/workspace/deepSpacer/benchmarks/chc-comp18-benchmarks/lia/chc-lia-0006.smt2')
 #    chc.dump()
     
-#    q = Query(chc)
+    q = Query(chc)
 #    print(q.fp)
-#    q.execute(chc.queries[0], params ={'spacer.max_level': 10})
-#    res, _ = q.execute("( or (< itp_0_n 0) (< itp_1_n 0) (< itp_2_n 0) (< itp_3_n 0))")
+    res, _ = q.execute("( or (< itp_0_n 0) (< itp_1_n 0) (< itp_2_n 0) (< itp_3_n 0))")
 #    print(res)
-#    q1_lemmas =  q.dump_lemmas("dump.json")
+    q1_lemmas =  q.dump_lemmas("dump.json")
 #    print("q1 lemmas:==================")
 #    print(json.dumps(q1_lemmas, indent=4, sort_keys=True))
 
-    q2 = Query(chc, lemmas_file = '../../pobvis/app/Now_yusuke.smt2_0to10.json')
-    q2_lemmas = q2.dump_lemmas("/tmp/throwaway.json")
+    q2 = Query(chc, lemmas_file = 'dump.json')
+    q2_lemmas = q2.dump_lemmas()
 
 #    q2.fp.set('spacer.max_level', 10)
-    q2.fp.set('spacer.print_json', "../../pobvis/yusuke.json")
-    q2.load_lemmas('../../pobvis/app/Now_yusuke.smt2_0to10.json')
+#    q2.fp.set('spacer.print_json', "../../pobvis/yusuke.json")
+#    q2.load_lemmas('../../pobvis/app/Now_yusuke.smt2_0to10.json')
     res = q2.fp.query(chc.queries[0])
-    q2_lemmas = q2.dump_lemmas("/tmp/throwaway.json")
-    print("q2 lemmas:==================")
-    print(json.dumps(q2_lemmas, indent=4, sort_keys=True))
-
    
     print(res)
 
