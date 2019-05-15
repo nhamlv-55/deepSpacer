@@ -5,17 +5,22 @@
     </head>
     <body>
         <div id = "menu-container">
-            <input id="filename" type="text" value="chc-lia-0006.smt2"/></br>
-            <input id="level" type="text" value="5"/></br>
-            <input id="lemmas-file" type="text" value=""/></br>
-            <textarea id="params" >{"spacer.max_level": 4,
+            <label for="">SMT2 file:</label>
+            <input id="filename" type="text" value="chc-lia-0006.smt2" />
+            <label for="">Starting from level:</label>
+            <input id="level" type="text" value="5" class="right-hand-box" /></br>
+            <label for="">Lemmas file (leave empty to start from scratch)</label>                
+            <input id="lemmas-file" type="text" value="" ></br>
+            <label for="">Params</label>
+            <textarea id="params" rows="4" >{"spacer.max_level": 4,
 "xform.slice": false,
 "xform.inline_eager": false,
 "xform.inline_linear": false}
             </textarea></br>
-            <textarea id="internal-lemmas" name=""></textarea></br>
-            <label>Hit Ctrl-Space to Execute</label></br>
+            <textarea id="internal-lemmas" name="" style="display: none;"></textarea></br>
+            <label>Custom query</label></br>
             <div id = "query_editor"></div>
+            <label for="">Formula</label>
             <div id = "formula_editor"> </div>
             <label id="debug-message"></label></br>
             <label id="result"></label></br>
@@ -98,8 +103,11 @@
     </script>
 
     <style type="text/css">
+     body{
+         font-family: monospace;
+     }
      #menu-container{
-         width: 400px;
+         width: 300px;
      }
      #canvas-container{
          position:absolute;
@@ -107,7 +115,7 @@
          width: 90%;
          height: 90%;
          top: 0px;
-         left: 400px;
+         left: 350px;
      }
      #network {
          position: absolute;
@@ -157,10 +165,12 @@
          width: 300px;
          min-height: 300px;
      }
-     #params, #filename, #level{
-        -webkit-box-sizing: border-box;
-        -moz-box-sizing: border-box;
-        box-sizing: border-box;
-         width: 300px;
+     input{
+         width:100%;
+         box-sizing:border-box;
+     }
+     #params{
+         width: 100%;
+         box-sizing: border-box;
      }
     </style>
