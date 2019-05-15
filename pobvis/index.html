@@ -1,4 +1,4 @@
-<!doctype html>
+<meta charset="utf-8"/>
 <html>
 <head>
   <title>Spacer Visualization</title>
@@ -36,7 +36,7 @@
     padding: .5em;
     resize: both;
   }
-   .prova{
+  .prova{
     resize: both;
     overflow: auto;
     width: 30%;
@@ -46,7 +46,7 @@
   #expr_pob{
   }
   #expr_lemma{
-    bottom: 0;
+    bottom: 20px;
   }
 
   #name {
@@ -62,7 +62,6 @@
   <div id="instances"></div>
   <textarea readonly id="expr_pob" class="expr"></textarea>
   <textarea readonly id="expr_lemma" class="expr"></textarea>
-  <textarea id="query"></textarea>
   <script>
 
    $.ajax({

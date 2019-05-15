@@ -15,7 +15,11 @@ def home():
 def send_json(path):
     return send_from_directory('static', path)
 
-
+@app.route("/format_node/", methods = ["POST"])
+def format_node():
+    pob = request.form["pob"]
+    lem = request.form["lem"]
+    return jsonify(pob = pob, lem = lem)
 
 @app.route("/execute_file/", methods = ["POST"])
 def execute_file():

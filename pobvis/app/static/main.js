@@ -71,7 +71,6 @@ function load_json(path) {
             network.on("click", function (params) {
                 if(params["nodes"].length){
                     node=network.data.nodes.get(params["nodes"][0]);
-                    $('#expr_pob').val(node.expr).show();
                     lemmas = ''
                     for (k in node.lemmas){
                         lemmas+='at depth: '+k;
@@ -81,7 +80,27 @@ function load_json(path) {
                             lemmas+="\n\n";
                         }
                     }
-                    $('#expr_lemma').val(lemmas).show();
+                    // send pob and lemmas to the server to do formating before showing
+                    fd = new FormData();
+                    fd.append('pob', node.expr);
+                    fd.append('lem', lemmas);
+
+                    $.ajax({
+                        type: 'POST',
+                        url: '/format_node/',
+                        data: fd,
+                        processData: false,
+                        contentType: false,
+                        error: function(jqXHR, textStatus, errorThrown){
+                        }
+                    }).done(function(data) {
+                        console.log(data)
+                        $('#expr_pob').val(data["pob"]).show();
+
+                        $('#expr_lemma').val(data["lem"]).show();
+                    });
+
+
                 }
             });
             network.on("deselectNode", function (params) {
