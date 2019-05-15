@@ -8,8 +8,11 @@ def lemma_to_string(lemma, pred):
     lhs = pred(*const_list)
     rhs = z3.substitute_vars(lemma, *(const_list))
     imp = z3.Implies(lhs, rhs)
-    forall = z3.ForAll(list(const_list), imp)
+    forall = z3.ForAll(list(reversed(const_list)), imp)
     lemma_str = "(assert %s)"%forall.sexpr()
+    print("\toriginal lemma:", lemma)
+    print("\tforall lemma:", forall.body().arg(1))
+    assert lemma == forall.body().arg(1)
     return lemma_str
 
 def stripQuantifierBlock (expr) :
