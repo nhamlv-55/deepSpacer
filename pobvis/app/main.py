@@ -23,9 +23,20 @@ def format_node():
     global CHC, Q
     pob = request.form["pob"]
     lem = request.form["lem"]
-    lem = lem.replace("itp_", "nham_")
-    pob = pob.replace("itp_", "arie_")
-    return jsonify(pob = pob, lem = lem)
+    pred_map = {'itp': 'nham', 'inv': 'arie'}
+    lem_tokens = ms.utils.tokenize(lem)
+    new_tokens = []
+    for t in lem_tokens:
+        if t.endswith("_n"):
+            pred, idx, _ = t.split("_")
+            if pred in pred_map:
+                pred = pred_map[pred]
+            new_tokens.append("_".join([pred, idx, _]))
+        else:
+            new_tokens.append(t)
+    new_lem = " ".join(new_tokens)
+    
+    return jsonify(pob = pob, lem = new_lem)
 
 @app.route("/execute_file/", methods = ["POST"])
 def execute_file():
