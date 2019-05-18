@@ -23,6 +23,8 @@ def format_node():
     global CHC, Q
     pob = request.form["pob"]
     lem = request.form["lem"]
+    lem = lem.replace("itp_", "nham_")
+    pob = pob.replace("itp_", "arie_")
     return jsonify(pob = pob, lem = lem)
 
 @app.route("/execute_file/", methods = ["POST"])
