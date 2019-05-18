@@ -95,9 +95,17 @@ function load_json(path) {
                         }
                     }).done(function(data) {
                         console.log(data)
-                        $('#expr_pob').val(data["pob"]).show();
+                        if($('#expr_pob').is(":hidden")){
+                            $('#expr_pob').val(data["pob"]).show();
 
-                        $('#expr_lemma').val(data["lem"]).show();
+                            $('#expr_lemma').val(data["lem"]).show();
+                        }
+                        else{
+                            $('#expr_pob').val(data["pob"]);
+
+                            $('#expr_lemma').val(data["lem"]);
+
+                        }
                     });
 
 
