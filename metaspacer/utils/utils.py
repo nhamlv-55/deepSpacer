@@ -1,4 +1,8 @@
 import z3
+def tokenize(chars):
+    #Convert a string of characters into a list of tokens.
+    #Snippet from Peter Norvig's (How to Write a (Lisp) Interpreter (in Python))
+    return chars.replace('(', ' ( ').replace(')', ' ) ').split()
 
 def lemma_to_string(lemma, pred):
     """
