@@ -114,7 +114,8 @@ In C code
         n = (select count(*) from DB.data where DB.data.filename = filename) #detect whether new data has been added
         if n>len(self.data):
           self.data = (select * from DB.data where DB.data.filename = filename)
-          train(self.data)
+          self.past_guess = (select * from DB.output where DB.output.filename = filename)
+          train(self.data, self.past_guess)
           predict(self.filename)
 
 \#DB schema
