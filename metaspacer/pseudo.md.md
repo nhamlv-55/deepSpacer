@@ -61,6 +61,10 @@ In C code
         return l_undef;
     }
 
+    #----------query-------------
+    def execute(..., timeout = -1):
+    
+    
     #----------solver------------
     def solve(filename):
       CHC = ms.CHCProblem(filename)
@@ -81,42 +85,47 @@ In C code
       done(server, filename)
     
     #-----------server-------------
-    models = {} #each chc file has its own model. if down the line we realize that 1 model for all chc formulas is good enough, nothing has to be changed.
+    oracles = {} #each chc file has its own oracle. if down the line we realize that 1 for all chc formulas is good enough, nothing has to be changed.
     worker_pool = []
-    def predict(filename):
-      input = (select * from DB.data where DB.data.filename = filename)
-      output = models[filename].predict(input)
-      if (select res from DB.output where DB.output.guess = output) is None: #if the guess hasn't been checked
-        lemmas  = [i["lemmas"] for i in input]
-        CHC = ms.CHCProblem(filename, lemmas)
-        Q = ms.query(CHC)
-        query = output
-        res, _ = Q.execute(query)
-        (insert filename, output, res to DB.output)
-    
     def handle_request(filename):
       return (select guess from DB.output where res=="sat")
     
     def handle_trigger(filename):
       if filename not in models:
-        models[filename] = net(filename)
-        worker_pool.append(net.main_loop())
+        oracles[filename] = oracle(filename)
+        worker_pool.append(oracle.main_loop())
     def handle_done(filename):
       remove_all_data(filename)
     
-    #-----------net--------------
+    #-----------oracle--------------
     def __init__(self, filename):
       self.filename = filename
       self.data = []
-    
+      self.net = ...
+      self.no_of_predictions = 10 #how many predictions we want to try after training
+      self.timeout = 1000
+      self.worker_pool = []
     def main_loop(self):
       while True:
         n = (select count(*) from DB.data where DB.data.filename = filename) #detect whether new data has been added
         if n>len(self.data):
           self.data = (select * from DB.data where DB.data.filename = filename)
           self.past_guess = (select * from DB.output where DB.output.filename = filename)
-          train(self.data, self.past_guess)
-          predict(self.filename)
+          train(self.data, self.past_guess) #self.net is train and update here
+          for i in range(no_of_predictions):
+            #try the prediction for a limited amount of time
+            self.worker_pool.append(predict(timeout))
+    
+    def predict(self, timeout):
+      input = self.data
+      output = self.net.forward(input)
+      if (select res from DB.output where DB.output.guess = output) is None: #if the guess hasn't been checked
+        lemmas  = [i["lemmas"] for i in input]
+        CHC = ms.CHCProblem(self.filename, lemmas)
+        Q = ms.query(CHC)
+        query = output
+        res, _ = Q.execute(query, timeout)
+        (insert filename, output, res to DB.output)
 
 \#DB schema
 DB.data
