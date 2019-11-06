@@ -28,8 +28,12 @@ class SpacerWrapper:
 
         with open ("tmp.json", "r") as f:
             graph_json = json.load(f)
-        
-        return lines, graph_json
+
+
+        with open(".z3-trace", "r") as f:
+            progress_trace = f.readlines()
+
+        return lines, graph_json, progress_trace
 
     # start Spacer with manual clause selection on the given input file, until Spacer asks for a clause to select or finishes execution
     # return the output generated before asking for a clause
@@ -81,6 +85,5 @@ class SpacerWrapper:
             else:
                 newLines.append(line)
                 line = self.spacerProcess.stdout.readline().decode().rstrip()
-
 
 
