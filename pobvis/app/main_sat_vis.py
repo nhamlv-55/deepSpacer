@@ -15,7 +15,6 @@ import metaspacer as ms
 import tempfile
 
 import argparse
-
 app = Flask(__name__)
 app.config.from_object(__name__)
 CORS(app)
@@ -39,10 +38,10 @@ def startSpacer(manualCS):
     if manualCS:
         output = spacerWrapper.startManualCS(temporaryFile.name, spacerUserOptions)
     else:
-        output, graph_json = spacerWrapper.start(temporaryFile.name, spacerUserOptions)
+        output, graph_json, progress_trace = spacerWrapper.start(temporaryFile.name, spacerUserOptions)
 
     print(output)
-    lines = output
+    lines = ms.parse(progress_trace)
     temporaryFile.close()
 
     # filename = request.form["filename"]
@@ -55,7 +54,7 @@ def startSpacer(manualCS):
     # lemmas_file = request.form["lemmas_file"]
     # time = "Now"
     # params["spacer.print_json"] = "static/"+filename + "." + time + ".json"
-    return json.dumps({'status': lines[0], 'lines': graph_json})
+    return json.dumps({'status': "success", 'spacerState': "saturation", 'nodes_list': lines})
 
 
 # def startSpacer(manualCS):
