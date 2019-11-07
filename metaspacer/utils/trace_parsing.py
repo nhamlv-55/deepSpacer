@@ -31,22 +31,6 @@ class ParsedLine (object):
             'statistics' : self.statistics
         }
 
-class Node (object):
-    def __init__(self, nodeId, parent, event_type,  timestamp, expr):
-        self.nodeId = nodeId
-        self.parent = parent
-        self.event_type = event_type
-        self.timestamp = timestamp
-        self.expr = expr
-
-    def to_Json(self):
-        return {"nodeId": self.nodeId,
-                "parent": self.parent,
-                "event_type": str(self.event_type),
-                "timestamp": self.timestamp,
-                "expr": self.expr}
-    def __repr__(self):
-        return json.dumps(self.to_Json())
 class Event (object):
     def __init__(self, idx, parent = None):
         self.lines = []
@@ -54,6 +38,9 @@ class Event (object):
         self.event_type = EType.NA
         self.parent = None
         self.children = []
+        self.exprID = -1
+        self.pobID = -1
+        self.level = -1
     def add_line(self, line):
         self.lines.append(line)
 
@@ -62,11 +49,24 @@ class Event (object):
             self.event_type = EType.EXP_LVL
         elif self.lines[0].startswith("** expand-pob"):
             self.event_type = EType.EXP_POB
-            _, _, _, _, level, _, depth = self.lines[0].strip().split()
+            _, _, _, label1, level, label2, depth, label3, exprID, label4, pobID = self.lines[0].strip().split()[:11]
+            assert(label1=="level:")
             self.level = int(level)
+            assert(label2=="depth:")
             self.depth = int(depth)
+            assert(label3=="exprID:")
+            self.exprID = int(exprID)
+            assert(label4=="pobID:")
+            self.pobID = int(pobID)
  
         elif self.lines[0].startswith("** add-lemma"):
+            _, label0, level, label1, exprID, label2, pobID = self.lines[0].strip().split()[:7]
+            assert(label0=="add-lemma:")
+            self.level = int(level)
+            assert(label1=="exprID:")
+            self.exprID = int(exprID)
+            assert(label2=="pobID:")
+            self.pobID = int(pobID)
             self.event_type = EType.ADD_LEM
         elif self.lines[0].startswith("Propagating"):
             self.event_type = EType.PRO_LEM
@@ -110,7 +110,10 @@ class Event (object):
                 "parent": self.parent,
                 "children": self.children,
                 "event_type": str(self.event_type),
-                "expr": self.lines}
+                "expr": "".join(self.lines),
+                "level": self.level,
+                "exprID": self.exprID,
+                "pobID": self.pobID}
 
 def parse(lines):
     timer = 0
