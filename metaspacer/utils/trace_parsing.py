@@ -53,12 +53,9 @@ class Event (object):
         self.idx = idx
         self.event_type = EType.NA
         self.parent = None
-
+        self.children = []
     def add_line(self, line):
         self.lines.append(line)
-
-    def to_Node(self):
-        return Node(self.idx, self.parent, self.event_type, self.idx, "".join(self.lines))
 
     def finalize(self, all_events):
         if self.lines[0].startswith("* LEVEL"):
@@ -73,8 +70,10 @@ class Event (object):
             self.event_type = EType.ADD_LEM
         elif self.lines[0].startswith("Propagating"):
             self.event_type = EType.PRO_LEM
-        self.parent = self.find_parent(all_events).idx
-
+        parent_event = self.find_parent(all_events)
+        parent_event.children.append(self.idx)
+        self.parent = parent_event.idx
+        
     def find_parent(self, all_events):
         if self.event_type == EType.ADD_LEM:
             #Adding lemma is the child event of the latest EXP_POB or Propagating
@@ -109,6 +108,7 @@ class Event (object):
     def to_Json(self):
         return {"nodeId": self.idx,
                 "parent": self.parent,
+                "children": self.children,
                 "event_type": str(self.event_type),
                 "expr": self.lines}
 
