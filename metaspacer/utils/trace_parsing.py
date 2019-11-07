@@ -85,9 +85,13 @@ class Event (object):
                     if e.event_type == EType.PRO_LEM:
                         return e
         elif self.event_type == EType.EXP_POB:
-            #Find the latest one with greater depth
+            # is the child of the previous one if level = prev_level-1
+            prev_event = all_events[-1]
+            if prev_event.event_type == EType.EXP_POB and prev_event.level-1 == self.level:
+                return prev_event
+            #Else, find the latest one with greater level
             for e in reversed(all_events):
-                if e.event_type == EType.EXP_LVL or ( e.event_type == EType.EXP_POB and e.depth > self.depth):
+                if e.event_type == EType.EXP_LVL or ( e.event_type == EType.EXP_POB and e.level > self.level):
                     return e
             print(self.lines)
             print("no father pob!!!!")
