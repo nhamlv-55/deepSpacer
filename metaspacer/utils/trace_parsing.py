@@ -36,7 +36,7 @@ class Event (object):
         self.lines = []
         self.idx = idx
         self.event_type = EType.NA
-        self.parent = None
+        self.parent = 0
         self.children = []
         self.exprID = -1
         self.pobID = -1
@@ -47,6 +47,7 @@ class Event (object):
     def finalize(self, all_events):
         if self.lines[0].startswith("* LEVEL"):
             self.event_type = EType.EXP_LVL
+            self.level = int(self.lines[0].strip().split()[-1])
         elif self.lines[0].startswith("** expand-pob"):
             self.event_type = EType.EXP_POB
             _, _, _, label1, level, label2, depth, label3, exprID, label4, pobID = self.lines[0].strip().split()[:11]
@@ -62,7 +63,10 @@ class Event (object):
         elif self.lines[0].startswith("** add-lemma"):
             _, label0, level, label1, exprID, label2, pobID = self.lines[0].strip().split()[:7]
             assert(label0=="add-lemma:")
-            self.level = int(level)
+            if level == "oo":
+                self.level = level
+            else:
+                self.level = int(level)
             assert(label1=="exprID:")
             self.exprID = int(exprID)
             assert(label2=="pobID:")
@@ -75,6 +79,8 @@ class Event (object):
         self.parent = parent_event.idx
         
     def find_parent(self, all_events):
+        #Return None if the node should be merged with the parent
+        #Return the parent otherwise
         if self.event_type == EType.ADD_LEM:
             #Adding lemma is the child event of the latest EXP_POB or Propagating
             if all_events[-1].event_type == EType.EXP_POB:
@@ -90,7 +96,9 @@ class Event (object):
                 return prev_event
             #Else, find the latest one with greater level
             for e in reversed(all_events):
-                if e.event_type == EType.EXP_LVL or ( e.event_type == EType.EXP_POB and e.level > self.level):
+                if e.event_type == EType.EXP_LVL:
+                    return e
+                elif e.event_type == EType.EXP_POB and e.level > self.level:
                     return e
             print(self.lines)
             print("no father pob!!!!")
@@ -106,18 +114,19 @@ class Event (object):
 
 
     def to_Json(self):
-        return {"nodeId": self.idx,
+        return {"nodeID": self.idx,
                 "parent": self.parent,
                 "children": self.children,
                 "event_type": str(self.event_type),
-                "expr": "".join(self.lines),
+                "expr": "".join(self.lines[1:]),
                 "level": self.level,
                 "exprID": self.exprID,
-                "pobID": self.pobID}
+                "pobID": self.pobID,
+                "to_be_vis": True}
 
 def parse(lines):
-    timer = 0
-    all_events = [Event(-1)]
+    timer = 1
+    all_events = [Event(0)]
     event = Event(idx = timer)
 
     for line in lines:
@@ -125,16 +134,15 @@ def parse(lines):
             if len(event.lines)!=0: #not an empty event
                 event.finalize(all_events)
                 all_events.append(event)
-            timer+=1
-            event = Event(idx = timer)
+                timer+=1
+                event = Event(idx = timer)
             
         else:
             event.add_line(line)
 
-    spacer_nodes = []
+    spacer_nodes = {}
     for event in all_events:
-        
-        spacer_nodes.append(event.to_Json())
+        spacer_nodes[event.idx] = event.to_Json()
 
     return spacer_nodes
 
