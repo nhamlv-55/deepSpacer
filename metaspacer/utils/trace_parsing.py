@@ -5,6 +5,7 @@ import re
 from collections import namedtuple
 import json
 from enum import Enum
+import sys
 
 class EType(Enum):
     EXP_LVL = 0
@@ -58,7 +59,10 @@ class Event (object):
             assert(label3=="exprID:")
             self.exprID = int(exprID)
             assert(label4=="pobID:")
-            self.pobID = int(pobID)
+            if pobID == 'none':
+                self.pobID = -1
+            else:
+                self.pobID = int(pobID)
  
         elif self.lines[0].startswith("** add-lemma"):
             _, label0, level, label1, exprID, label2, pobID = self.lines[0].strip().split()[:7]
@@ -90,16 +94,18 @@ class Event (object):
                     if e.event_type == EType.PRO_LEM:
                         return e
         elif self.event_type == EType.EXP_POB:
-            # is the child of the previous one if level = prev_level-1
+           # is the child of the previous one if level = prev_level-1
             prev_event = all_events[-1]
-            if prev_event.event_type == EType.EXP_POB and prev_event.level-1 == self.level:
+            if prev_event.event_type == EType.EXP_POB and prev_event.level == self.level + 1:
                 return prev_event
-            #Else, find the latest one with greater level
+            # else, find the latest one with greater level
             for e in reversed(all_events):
                 if e.event_type == EType.EXP_LVL:
                     return e
                 elif e.event_type == EType.EXP_POB and e.level > self.level:
                     return e
+
+            # only expect this to happen once because 'enter level 0' event is not produced
             print(self.lines)
             print("no father pob!!!!")
            
@@ -147,7 +153,10 @@ def parse(lines):
     return spacer_nodes
 
 if __name__=="__main__":
-    with open("/home/nv3le/workspace/saturation-visualization/deepSpacer/pobvis/app/.z3-trace", "r") as f:
+    file_name = "/home/nv3le/workspace/saturation-visualization/deepSpacer/pobvis/app/.z3-trace" 
+    if len(sys.argv) > 1:
+        file_name = sys.argv[1]
+    with open(file_name, "r") as f:
         lines = f.readlines()
         all_events = parse(lines)
         print(len(all_events))
