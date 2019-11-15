@@ -24,7 +24,13 @@ parser.add_argument("-z3", "--z3", required=True, action="store", dest="z3Path",
 args = parser.parse_args()
 spacerWrapper = ms.SpacerWrapper(args.z3Path)
 
-def startSpacer(manualCS):
+spacerProcess = None
+
+
+def startSpacer(iterative):
+    global spacerProcess
+    if spacerProcess is not None:
+        spacerProcess.kill()
     request_params = request.get_json()
     fileContent = request_params.get('file', '')
     print(request_params)
@@ -35,81 +41,24 @@ def startSpacer(manualCS):
     temporaryFile.write(str.encode(fileContent))
     temporaryFile.flush() # commit file buffer to disk so that Spacer can access it
 
-    if manualCS:
-        output = spacerWrapper.startManualCS(temporaryFile.name, spacerUserOptions)
+    if iterative:
+        spacer_process, status= spacerWrapper.startIterative(temporaryFile.name, spacerUserOptions)
+        return json.dumps({'status': status, 'spacerState': "running", 'nodes_list': {}})
     else:
-        output, graph_json, progress_trace = spacerWrapper.start(temporaryFile.name, spacerUserOptions)
+        spacer_process, graph_json, progress_trace = spacerWrapper.start(temporaryFile.name, spacerUserOptions)
 
-    print(output)
     lines = ms.parse(progress_trace)
     temporaryFile.close()
 
-    # filename = request.form["filename"]
-    # print(folder + filename)
-    # query = request.form["query_text"]
-    # show_formula = request.form["show_formula"]
-    # params = json.loads(request.form["params"])
-    # level = int(request.form["level"])
-    # interactive = request.form["interactive"]
-    # lemmas_file = request.form["lemmas_file"]
-    # time = "Now"
-    # params["spacer.print_json"] = "static/"+filename + "." + time + ".json"
     return json.dumps({'status': "success", 'spacerState': "saturation", 'nodes_list': lines})
 
-
-# def startSpacer(manualCS):
-#     request_params = request.get_json()
-#     fileContent = request_params.get('file', '')
-#     print(request_params)
-#     return
-#     if fileContent == "":
-#         message = "User error: Input encoding must not be empty!"
-#         print(message)
-#         return json.dumps({
-#             "status" : "error",
-#             "message" : message
-#         })
-#     spacerUserOptions = request_params.get("spacerUserOptions", "")
-
-#     temporaryFile = tempfile.NamedTemporaryFile()
-#     temporaryFile.write(str.encode(fileContent))
-#     temporaryFile.flush() # commit file buffer to disk so that Spacer can access it
-
-#     if manualCS:
-#         output = spacerWrapper.startManualCS(temporaryFile.name, spacerUserOptions)
-#     else:
-#         output = spacerWrapper.start(temporaryFile.name, spacerUserOptions)
-
-#     if spacerWrapper.spacerState == "error":
-#         message = "User error: Wrong options for Spacer or mistake in encoding"
-#         print(message)
-#         return json.dumps({
-#             "status" : "error",
-#             "message" : message
-#         })
-
-#     lines = parse(output)
-#     temporaryFile.close()
-
-#     if manualCS:
-#         return json.dumps({
-#             'status' : "success",
-#             'spacerState' : spacerWrapper.spacerState, 
-#             'lines' : [line.to_json() for line in lines], 
-#         })
-#     else:
-#         return json.dumps({
-#             'status' : "success",
-#             'spacerState' : spacerWrapper.spacerState, 
-#             'lines' : [line.to_json() for line in lines]
-#         })
 
 @app.route('/spacer/start', methods=['POST'])
 def handle_startSpacer():  
     return startSpacer(False)
 
-@app.route('/spacer/startmanualcs', methods=['POST'])
-def handle_startSpacerManualCS():
+@app.route('/spacer/startiterative', methods=['POST'])
+def handle_startSpacerIterative():
     return startSpacer(True)
 
 @app.route('/spacer/select', methods=['POST'])
