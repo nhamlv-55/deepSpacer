@@ -24,33 +24,41 @@ parser.add_argument("-z3", "--z3", required=True, action="store", dest="z3Path",
 args = parser.parse_args()
 spacerWrapper = ms.SpacerWrapper(args.z3Path)
 
-spacerProcess = None
 
 
 def startSpacer(iterative):
-    global spacerProcess
-    if spacerProcess is not None:
-        spacerProcess.kill()
     request_params = request.get_json()
     fileContent = request_params.get('file', '')
     print(request_params)
 
     spacerUserOptions = request_params.get("spacerUserOptions", "")
 
-    temporaryFile = tempfile.NamedTemporaryFile()
+    temporaryFile = open("input_file.smt2", "wb")
     temporaryFile.write(str.encode(fileContent))
     temporaryFile.flush() # commit file buffer to disk so that Spacer can access it
 
     if iterative:
-        spacer_process, status= spacerWrapper.startIterative(temporaryFile.name, spacerUserOptions)
+        status= spacerWrapper.startIterative(temporaryFile.name, spacerUserOptions)
         return json.dumps({'status': status, 'spacerState': "running", 'nodes_list': {}})
     else:
-        spacer_process, graph_json, progress_trace = spacerWrapper.start(temporaryFile.name, spacerUserOptions)
+        graph_json, progress_trace = spacerWrapper.start(temporaryFile.name, spacerUserOptions)
+
+        lines = ms.parse(progress_trace)
+        temporaryFile.close()
+        print("close tempfile")
+        return json.dumps({'status': "success", 'spacerState': "saturation", 'nodes_list': lines})
+
+def poke():
+    with open ("tmp.json", "r") as f:
+        graph_json = json.load(f)
+
+
+    with open("spacer.log", "r") as f:
+        progress_trace = f.readlines()
 
     lines = ms.parse(progress_trace)
-    temporaryFile.close()
 
-    return json.dumps({'status': "success", 'spacerState': "saturation", 'nodes_list': lines})
+    return json.dumps({'status': "success", 'spacerState': "running", 'nodes_list': lines})
 
 
 @app.route('/spacer/start', methods=['POST'])
@@ -60,7 +68,9 @@ def handle_startSpacer():
 @app.route('/spacer/startiterative', methods=['POST'])
 def handle_startSpacerIterative():
     return startSpacer(True)
-
+@app.route('/spacer/poke', methods=['POST'])
+def handle_poke():
+    return poke()
 @app.route('/spacer/select', methods=['POST'])
 def handle_selection():    
     request_params = request.get_json()
