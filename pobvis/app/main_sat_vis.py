@@ -41,7 +41,7 @@ def startSpacer(iterative):
         status= spacerWrapper.startIterative(temporaryFile.name, spacerUserOptions)
         return json.dumps({'status': status, 'spacerState': "running", 'nodes_list': {}})
     else:
-        graph_json, progress_trace = spacerWrapper.start(temporaryFile.name, spacerUserOptions)
+        progress_trace = spacerWrapper.start(temporaryFile.name, spacerUserOptions)
 
         lines = ms.parse(progress_trace)
         temporaryFile.close()
@@ -49,16 +49,25 @@ def startSpacer(iterative):
         return json.dumps({'status': "success", 'spacerState': "saturation", 'nodes_list': lines})
 
 def poke():
-    with open ("tmp.json", "r") as f:
-        graph_json = json.load(f)
-
 
     with open("spacer.log", "r") as f:
         progress_trace = f.readlines()
 
+    with open("stat", "r") as f:
+        stats = f.readlines()
+        if len(stats)>0:
+            if 'sat' in stats[0] or 'bounded' in stats[0]:
+                spacerState = 'finished'
+                spacerState += '. Result: %s'%stats[0]
+                print(spacerState)
+            else:
+                spacerState = 'running'
+        else:
+            spacerState = 'running'
+    
     lines = ms.parse(progress_trace)
 
-    return json.dumps({'status': "success", 'spacerState': "running", 'nodes_list': lines})
+    return json.dumps({'status': "success", 'spacerState': spacerState, 'nodes_list': lines})
 
 
 @app.route('/spacer/start', methods=['POST'])
