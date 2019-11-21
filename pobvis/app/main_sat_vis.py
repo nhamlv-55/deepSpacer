@@ -53,15 +53,23 @@ def poke():
     with open("spacer.log", "r") as f:
         progress_trace = f.readlines()
 
+    with open("verbose", "r") as f:
+        verbose = f.readlines()
+
     with open("stat", "r") as f:
         stats = f.readlines()
-        if len(stats)>0:
-            if 'sat' in stats[0] or 'bounded' in stats[0]:
+        #check if there are no error in running
+        if len(verbose)>0 and verbose[0].startswith('ERROR'):
+            spacerState = 'stopped. '
+            spacerState += verbose[0]
+            return json.dumps({'status': "success", 'spacerState': spacerState, 'nodes_list': {}})
+        elif len(stats)>0:
+            if 'sat' in stats[0] or 'bounded' in stats[0] or 'unknown' in stats[0]:
                 spacerState = 'finished'
                 spacerState += '. Result: %s'%stats[0]
                 print(spacerState)
             else:
-                spacerState = 'running'
+                spacerState = 'Unknown returned message'
         else:
             spacerState = 'running'
     
