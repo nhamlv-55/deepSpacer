@@ -1,5 +1,7 @@
 from subprocess import PIPE, STDOUT, Popen, run
 import json
+import os
+import glob
 class SpacerWrapper:
 
     def __init__(self, z3Path):
@@ -40,6 +42,21 @@ class SpacerWrapper:
         if self.spacerProcess != None:
             print("Killing previous running Z3 Process")
             self.spacerProcess.kill()
+
+        # save all the data from previous runs
+        # how many runs are there
+
+        no_of_runs = len(glob.glob("run_*"))
+        new_folder = "run_"+str(no_of_runs)
+        os.mkdir(new_folder)
+
+        # move the files into the newly created folder
+        if os.path.exists("verbose"): os.rename('verbose', '%s/verbose'%new_folder)
+        if os.path.exists("stat"): os.rename('stat', '%s/stat'%new_folder)
+        if os.path.exists(".z3-trace"): os.rename('.z3-trace', '%s/.z3-trace'%new_folder)
+        if os.path.exists("spacer.log"): os.rename('spacer.log', '%s/spacer.log'%new_folder)
+        for benchmark_file in glob.glob('pool_solver*'):
+            os.rename(benchmark_file, "%s/%s"%(new_folder, benchmark_file))
 
         # note: if an option is supplied twice, Spacer ignores the first occurence
         #       we therefore add the user options first, so that user options conflicting
