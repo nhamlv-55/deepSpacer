@@ -9,12 +9,41 @@ import json
 from flask import Flask, request
 from flask_cors import CORS
 import metaspacer as ms
-#from model.parsing import parse
-#from model.spacer import SpacerWrapper
-
 import tempfile
 
 import argparse
+from chctools import horndb as H
+import io
+
+import pysmt.operators as pyopt
+
+def calculate_val(node):
+    if node.is_real_constant():
+        frac = node._content.payload
+        val = frac.numerator / frac.denominator
+        return val
+    return str(node._content.payload)
+
+def to_json(node):
+    if len(node.args())==0:
+        obj = {pyopt.op_to_str(node.node_type()):calculate_val(node)}
+        return obj
+    else:
+        args = []
+        for a in node.args():
+            args.append(to_json(a))
+        obj = {pyopt.op_to_str(node.node_type()): args}
+        return obj
+
+def order_dict(dictionary):
+    result = {}
+    for k, v in sorted(dictionary.items()):
+        if isinstance(v, dict):
+            result[k] = order_dict(v)
+        else:
+            result[k] = v
+    return result
+
 app = Flask(__name__)
 app.config.from_object(__name__)
 CORS(app)
@@ -49,7 +78,6 @@ def startSpacer(iterative):
         return json.dumps({'status': "success", 'spacerState': "saturation", 'nodes_list': lines})
 
 def poke():
-
     with open("spacer.log", "r") as f:
         progress_trace = f.readlines()
 
@@ -73,9 +101,20 @@ def poke():
         else:
             spacerState = 'running'
     
-    lines = ms.parse(progress_trace)
+    nodes_list = ms.parse(progress_trace)
+    #parse expr to json
+    for idx in nodes_list:
+        node = nodes_list[idx]
+        if node["exprID"]>2:
+            print(node)
+            expr = node["expr"]
+            expr_stream = io.StringIO(expr)
+            ast = spacerWrapper.rels[0].pysmt_parse_lemma(expr_stream)
+            ast_json = order_dict(to_json(ast))
+            node["ast_json"] = ast_json
 
-    return json.dumps({'status': "success", 'spacerState': spacerState, 'nodes_list': lines})
+
+    return json.dumps({'status': "success", 'spacerState': spacerState, 'nodes_list': nodes_list})
 
 
 @app.route('/spacer/start', methods=['POST'])

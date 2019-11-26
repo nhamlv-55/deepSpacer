@@ -120,11 +120,15 @@ class Event (object):
 
 
     def to_Json(self):
+        if self.event_type==EType.ADD_LEM:
+            expr = "".join(self.lines[2:])
+        else:
+            expr = "".join(self.lines[1:])
         return {"nodeID": self.idx,
                 "parent": self.parent,
                 "children": self.children,
                 "event_type": str(self.event_type),
-                "expr": "".join(self.lines[1:]),
+                "expr": expr,
                 "level": self.level,
                 "exprID": self.exprID,
                 "pobID": self.pobID,
