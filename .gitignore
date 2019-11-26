@@ -9,3 +9,4 @@ benchmarks/
 z3/
 .z3-trace
 spacer_ref/
+run_*
