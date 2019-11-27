@@ -25,14 +25,15 @@ def calculate_val(node):
     return str(node._content.payload)
 
 def to_json(node):
+#     print(node, node.get_type(), node.args())
     if len(node.args())==0:
-        obj = {pyopt.op_to_str(node.node_type()):calculate_val(node)}
+        obj = {"type":pyopt.op_to_str(node.node_type()), "content":calculate_val(node)}
         return obj
     else:
         args = []
         for a in node.args():
             args.append(to_json(a))
-        obj = {pyopt.op_to_str(node.node_type()): args}
+        obj = {"type":pyopt.op_to_str(node.node_type()), "content": args}
         return obj
 
 def order_dict(dictionary):
@@ -40,6 +41,11 @@ def order_dict(dictionary):
     for k, v in sorted(dictionary.items()):
         if isinstance(v, dict):
             result[k] = order_dict(v)
+        elif isinstance(v, list):
+            for arg in v:
+                order_dict(arg)
+            sorted(v, key=lambda k: k['type']) 
+            result[k] = v
         else:
             result[k] = v
     return result
