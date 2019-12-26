@@ -20,7 +20,7 @@ def calculate_val(node):
     if node.is_real_constant():
         frac = node._content.payload
         val = frac.numerator / frac.denominator
-        return val
+        return round(val, 4)
     return str(node._content.payload[0])
 def to_json(node):
 #     print(node, node.get_type(), node.args())
