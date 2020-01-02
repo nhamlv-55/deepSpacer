@@ -20,7 +20,7 @@ def calculate_val(node):
     if node.is_real_constant():
         frac = node._content.payload
         val = frac.numerator / frac.denominator
-        return round(val, 4)
+        return val
     return str(node._content.payload[0])
 def to_json(node):
 #     print(node, node.get_type(), node.args())
@@ -60,7 +60,7 @@ spacerWrapper = ms.SpacerWrapper(args.z3Path)
 
 
 
-def startSpacer(iterative):
+def startSpacer():
     request_params = request.get_json()
     fileContent = request_params.get('file', '')
     print(request_params)
@@ -71,16 +71,8 @@ def startSpacer(iterative):
     temporaryFile.write(str.encode(fileContent))
     temporaryFile.flush() # commit file buffer to disk so that Spacer can access it
 
-    if iterative:
-        status= spacerWrapper.startIterative(temporaryFile.name, spacerUserOptions)
-        return json.dumps({'status': status, 'spacerState': "running", 'nodes_list': {}})
-    else:
-        progress_trace = spacerWrapper.start(temporaryFile.name, spacerUserOptions)
-
-        lines = ms.parse(progress_trace)
-        temporaryFile.close()
-        print("close tempfile")
-        return json.dumps({'status': "success", 'spacerState': "saturation", 'nodes_list': lines})
+    status= spacerWrapper.startIterative(temporaryFile.name, spacerUserOptions)
+    return json.dumps({'status': status, 'spacerState': "running", 'nodes_list': {}})
 
 def poke():
     with open("spacer.log", "r") as f:
@@ -124,38 +116,11 @@ def poke():
     return json.dumps({'status': "success", 'spacerState': spacerState, 'nodes_list': nodes_list})
 
 
-@app.route('/spacer/start', methods=['POST'])
-def handle_startSpacer():  
-    return startSpacer(False)
-
 @app.route('/spacer/startiterative', methods=['POST'])
 def handle_startSpacerIterative():
-    return startSpacer(True)
+    return startSpacer()
 @app.route('/spacer/poke', methods=['POST'])
 def handle_poke():
     return poke()
-@app.route('/spacer/select', methods=['POST'])
-def handle_selection():    
-    request_params = request.get_json()
-    selectedId = int(request_params.get('id', ''))
-
-    if(spacerWrapper.spacerState != "running"):
-        message = "User error: Spacer is not running, so it makes no sense to perform selection!"
-        print(message)
-        return json.dumps({
-            'status' : "error",
-            "message" : message,
-            'spacerState' : spacerWrapper.spacerState
-        })
-    # TODO: check that selectedId was accepted by Spacer
-    output = spacerWrapper.select(selectedId)
-    lines = parse(output)
-
-    return json.dumps({
-        "status" : "success",
-        'spacerState' : spacerWrapper.spacerState, 
-        'lines' : [line.to_json() for line in lines], 
-    })  
-
 if __name__ == '__main__':
     app.run()
