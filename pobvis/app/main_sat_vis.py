@@ -77,7 +77,7 @@ def startSpacer():
 def replay():
     request_params = request.get_json()
     fileContent = request_params.get('file', '')
-    print(fileContent)
+    print(len(fileContent))
     progress_trace = fileContent.splitlines(keepends=True)
 
     nodes_list = ms.parse(progress_trace)
@@ -100,9 +100,8 @@ def replay():
     return json.dumps({'status': "success", 'spacerState': 'replay', 'nodes_list': nodes_list})
 
 def poke():
-    with open("spacer.log", "r") as f:
-        progress_trace = f.readlines()
-
+    nodes_list = []
+    spacerState = "UNKNOWN"
     with open("verbose", "r") as f:
         verbose = f.readlines()
 
@@ -122,20 +121,25 @@ def poke():
                 spacerState = 'Unknown returned message'
         else:
             spacerState = 'running'
-    
-    nodes_list = ms.parse(progress_trace)
-    #parse expr to json
-    for idx in nodes_list:
-        node = nodes_list[idx]
-        if node["exprID"]>2:
-            expr = node["expr"]
-            expr_stream = io.StringIO(expr)
-            try:
-                ast = spacerWrapper.rels[0].pysmt_parse_lemma(expr_stream)
-                ast_json = order_node(to_json(ast))
-                node["ast_json"] = ast_json
-            except Exception as e:
-                node["ast_json"] = {"type": "ERROR", "content": "trace is incomplete"}
+
+    #only read spacer.log when there are no errors
+    if spacerState == 'running' or spacerState.startswith('finished'):
+        with open("spacer.log", "r") as f:
+            progress_trace = f.readlines()
+
+            nodes_list = ms.parse(progress_trace)
+            #parse expr to json
+            for idx in nodes_list:
+                node = nodes_list[idx]
+                if node["exprID"]>2:
+                    expr = node["expr"]
+                    expr_stream = io.StringIO(expr)
+                    try:
+                        ast = spacerWrapper.rels[0].pysmt_parse_lemma(expr_stream)
+                        ast_json = order_node(to_json(ast))
+                        node["ast_json"] = ast_json
+                    except Exception as e:
+                        node["ast_json"] = {"type": "ERROR", "content": "trace is incomplete"}
 
 
     return json.dumps({'status': "success", 'spacerState': spacerState, 'nodes_list': nodes_list})
