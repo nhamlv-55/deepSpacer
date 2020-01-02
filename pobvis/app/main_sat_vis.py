@@ -84,15 +84,18 @@ def replay():
     #parse expr to json
     for idx in nodes_list:
         node = nodes_list[idx]
-        if node["exprID"]>2:
-            expr = node["expr"]
-            expr_stream = io.StringIO(expr)
-            try:
-                ast = spacerWrapper.rels[0].pysmt_parse_lemma(expr_stream)
-                ast_json = order_node(to_json(ast))
-                node["ast_json"] = ast_json
-            except Exception as e:
-                node["ast_json"] = {"type": "ERROR", "content": "trace is incomplete"}
+        #XXX: FIXME temporary disable reordering because parsing is not really modular.
+        
+        node["ast_json"] = {"type": "ERROR", "content": "Don't know how to parse in replay mode yet"}
+        # if node["exprID"]>2:
+        #     expr = node["expr"]
+        #     expr_stream = io.StringIO(expr)
+        #     try:
+        #         ast = spacerWrapper.rels[0].pysmt_parse_lemma(expr_stream)
+        #         ast_json = order_node(to_json(ast))
+        #         node["ast_json"] = ast_json
+        #     except Exception as e:
+        #         node["ast_json"] = {"type": "ERROR", "content": "trace is incomplete"}
 
     return json.dumps({'status': "success", 'spacerState': 'replay', 'nodes_list': nodes_list})
 
