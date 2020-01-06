@@ -31,6 +31,7 @@ class SpacerWrapper:
         os.mkdir(new_folder)
 
         # move the files into the newly created folder
+        if os.path.exists("input_file.smt2"): os.rename('input_file.smt2', '%s/input_file.smt2'%new_folder)
         if os.path.exists("verbose"): os.rename('verbose', '%s/verbose'%new_folder)
         if os.path.exists("stat"): os.rename('stat', '%s/stat'%new_folder)
         if os.path.exists(".z3-trace"): os.rename('.z3-trace', '%s/.z3-trace'%new_folder)
