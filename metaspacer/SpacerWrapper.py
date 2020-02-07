@@ -15,16 +15,10 @@ class SpacerWrapper:
         self.z3_path = z3_path
         self.db = None
         self.rels = None
+        #backup on instantiation
+        self.backup_prev_run()
 
-    # run Spacer iteratively
-    def startIterative(self, input_file, user_options):
-        if self.spacer_process is not None:
-            self.spacer_process.kill()
-            print("Killing previous running Z3 Process")
-            self.verbose_file.close()
-            self.stat_file.close()
-            # save all the data from previous runs
-
+    def backup_prev_run(self):
         # how many runs are there
         no_of_runs = len(glob.glob("run_*"))
         new_folder = "run_"+str(no_of_runs)
@@ -39,6 +33,17 @@ class SpacerWrapper:
         for benchmark_file in glob.glob('pool_solver*'):
             os.rename(benchmark_file, "%s/%s"%(new_folder, benchmark_file))
 
+
+
+    # run Spacer iteratively
+    def startIterative(self, input_file, user_options):
+        if self.spacer_process is not None:
+            self.spacer_process.kill()
+            print("Killing previous running Z3 Process")
+            self.verbose_file.close()
+            self.stat_file.close()
+            # save all the data from previous runs
+            self.backup_prev_run()
         args = [self.z3_path]
         args.extend(user_options.split())
         args.extend(self.options_for_visualization)
