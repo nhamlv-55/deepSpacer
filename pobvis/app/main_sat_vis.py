@@ -69,9 +69,9 @@ spacerWrapper = ms.SpacerWrapper(args.z3Path)
 def startSpacer():
     request_params = request.get_json()
     fileContent = request_params.get('file', '')
-    print(request_params)
 
     spacerUserOptions = request_params.get("spacerUserOptions", "")
+    print(fileContent)
 
     temporaryFile = open("input_file.smt2", "wb")
     temporaryFile.write(str.encode(fileContent))
