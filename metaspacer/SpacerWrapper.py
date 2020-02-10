@@ -4,7 +4,7 @@ import os
 import glob
 from chctools import horndb as H
 import io
-
+import shutil
 class SpacerWrapper:
 
     def __init__(self, z3_path):
@@ -15,6 +15,7 @@ class SpacerWrapper:
         self.z3_path = z3_path
         self.db = None
         self.rels = None
+
         #backup on instantiation
         self.backup_prev_run()
 
@@ -24,8 +25,11 @@ class SpacerWrapper:
         new_folder = "run_"+str(no_of_runs)
         os.mkdir(new_folder)
 
+        print("backing up stuff into %s"%new_folder)
+
         # move the files into the newly created folder
-        if os.path.exists("input_file.smt2"): os.rename('input_file.smt2', '%s/input_file.smt2'%new_folder)
+        if os.path.exists("input_file.smt2"): shutil.copyfile('input_file.smt2', '%s/input_file.smt2'%new_folder)
+        if os.path.exists("run_cmd"): os.rename('run_cmd', '%s/run_cmd'%new_folder)
         if os.path.exists("verbose"): os.rename('verbose', '%s/verbose'%new_folder)
         if os.path.exists("stat"): os.rename('stat', '%s/stat'%new_folder)
         if os.path.exists(".z3-trace"): os.rename('.z3-trace', '%s/.z3-trace'%new_folder)
@@ -40,10 +44,12 @@ class SpacerWrapper:
         if self.spacer_process is not None:
             self.spacer_process.kill()
             print("Killing previous running Z3 Process")
+            print("Closing files")
             self.verbose_file.close()
             self.stat_file.close()
-            # save all the data from previous runs
-            self.backup_prev_run()
+        # save all the data from previous runs
+        self.backup_prev_run()
+
         args = [self.z3_path]
         args.extend(user_options.split())
         args.extend(self.options_for_visualization)
@@ -62,9 +68,11 @@ class SpacerWrapper:
 
         self.verbose_file = open("verbose", "w")
         self.stat_file = open("stat", "w")
-
+        with open("run_cmd", "w") as f:
+            f.write(" ".join(args))
         print("Running cmd:\n%s"% " ".join(args))
-        self.spacerProcess = Popen(args, stdin=PIPE, stdout=self.stat_file, stderr=self.verbose_file)
         
+        self.spacer_process = Popen(args, stdin=PIPE, stdout=self.stat_file, stderr=self.verbose_file)
+
         return "success"
 
