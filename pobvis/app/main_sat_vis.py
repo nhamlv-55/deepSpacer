@@ -16,25 +16,30 @@ from chctools import horndb as H
 import io
 
 import pysmt.operators as pyopt
+ERROR_OBJ = {"type": "ERROR", "content": "trace is incomplete"}
 def calculate_val(node):
     if node.is_real_constant():
         frac = node._content.payload
         val = frac.numerator / frac.denominator
         return round(val, 4)
     return str(node._content.payload[0])
-def to_json(node):
-#     print(node, node.get_type(), node.args())
+def to_json(node, debug = False):
+    if debug: print(node, node.get_type(), node.args())
     if node.is_real_constant():
         type_str = "0_REAL_CONSTANT" #hack to put real constant at the end
     else:
+
         type_str = pyopt.op_to_str(node.node_type())
+        if debug:
+            print("NODE TYPE:", node.node_type())
+            print("TYPE_STR:", type_str)
     if len(node.args())==0:
         obj = {"type": type_str, "content":calculate_val(node)}
         return obj
     else:
         args = []
         for a in node.args():
-            args.append(to_json(a))
+            args.append(to_json(a, debug))
         obj = {"type": type_str, "content": args}
         return obj
     
@@ -44,8 +49,9 @@ def order_node(node):
     if isinstance(args, list):
         for idx in range(len(args)):
             args[idx] = order_node(args[idx])
-            
-        args = sorted(args, key=lambda k: (k["type"], str(k["content"])), reverse = True) 
+        #only order commutative operators
+        if node["type"]=="PLUS" or node["type"]=="TIMES" or node["type"]=="AND":
+            args = sorted(args, key=lambda k: (k["type"], str(k["content"])), reverse = True) 
         node["content"] = args
     return node
 
@@ -138,7 +144,11 @@ def poke():
                         ast = spacerWrapper.rels[0].pysmt_parse_lemma(expr_stream)
                         ast_json = order_node(to_json(ast))
                         node["ast_json"] = ast_json
+                        
                     except Exception as e:
+                        print("Exception when ordering the node:", e)
+                        print("Broken Node", node)
+                        print("Broken Node exprID:", node["exprID"])
                         node["ast_json"] = {"type": "ERROR", "content": "trace is incomplete"}
 
 
