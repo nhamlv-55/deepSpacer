@@ -94,6 +94,7 @@ def startSpacer():
     return json.dumps({'status': "success", 'spacerState': "running", 'nodes_list': {}})
 
 def poke():
+    #TODO: finish parsing using all the files in the exp_folder (input_file, etc.)
     request_params = request.get_json()
     exp_path = request_params.get('exp_path', '')
     exp_folder = os.path.join(MEDIA, exp_path)
@@ -108,27 +109,7 @@ def poke():
     with open(os.path.join(exp_folder, "spacer.log"), "r") as f:
         spacer_log = f.readlines()
 
-
-
-
-    # with open("stat", "r") as f:
-    #     stats = f.readlines()
-    #     #check if there are no error in running
-    #     if len(verbose)>0 and verbose[0].startswith('ERROR'):
-    #         spacerState = 'stopped. '
-    #         spacerState += verbose[0]
-    #         return json.dumps({'status': "success", 'spacerState': spacerState, 'nodes_list': {}})
-    #     elif len(stats)>0:
-    #         if 'sat' in stats[0] or 'bounded' in stats[0] or 'unknown' in stats[0]:
-    #             spacerState = 'finished'
-    #             spacerState += '. Result: %s'%stats[0]
-    #             print(spacerState)
-    #         else:
-    #             spacerState = 'Unknown returned message'
-    #     else:
-    #         spacerState = 'running'
-
-    #only read spacer.log when there are no errors
+    #TODO: only read spacer.log when there are no errors
     if spacerState == 'running' :
             nodes_list = ms.parse(spacer_log)
             #parse expr to json
