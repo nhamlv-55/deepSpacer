@@ -1,5 +1,8 @@
 from flask import g
 import pysmt.operators as pyopt
+import sqlite3
+from settings import DATABASE, MEDIA, options_for_visualization
+import json
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
