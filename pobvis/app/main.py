@@ -10,14 +10,11 @@ import tempfile
 import argparse
 from chctools import horndb as H
 import io
-import pysmt.operators as pyopt
 import os
-import sqlite3
 from settings import DATABASE, MEDIA, options_for_visualization
 import metaspacer as ms
 from subprocess import PIPE, STDOUT, Popen, run
 from chctools import horndb as H
-from datetime import datetime
 from utils import *
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -57,7 +54,7 @@ def startSpacer():
         run_cmd = " ".join(run_args)
         f.write(run_cmd)
 
-    Popen(run_args, stdin=PIPE, stdout=stdout_file, stderr=stderr_file, cwd = exp_folder, close_fds = True)
+    Popen(run_args, stdin=PIPE, stdout=stdout_file, stderr=stderr_file, cwd = exp_folder)
 
     return json.dumps({'status': "success", 'spacerState': "running", 'nodes_list': {}, 'exp_name': new_exp_name})
 
