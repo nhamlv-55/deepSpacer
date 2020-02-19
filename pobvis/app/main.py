@@ -8,17 +8,17 @@ import json
 
 from flask import Flask, request
 from flask_cors import CORS
-import metaspacer as ms
 import tempfile
 import argparse
 from chctools import horndb as H
 import io
 import pysmt.operators as pyopt
-
+import os
 import sqlite3
 from flask import g
-from settings import DATABASE
+from settings import DATABASE, MEDIA, options_for_visualization
 
+from subprocess import PIPE, STDOUT, Popen, run
 app = Flask(__name__)
 app.config.from_object(__name__)
 CORS(app)
@@ -54,53 +54,9 @@ def fetch_exps():
     return json.dumps({'status': "success", 'exps_list':exps_list})
 
 def get_new_exp_name():
-    now = datetime. now()
-    current_time = now.strftime("%H:%M:%S")
+    now = datetime.now()
+    current_time = now.strftime("%d%m%y_%H_%M_%S")
     return current_time
-
-# ERROR_OBJ = {"type": "ERROR", "content": "trace is incomplete"}
-# def calculate_val(node):
-#     if node.is_real_constant():
-#         frac = node._content.payload
-#         val = frac.numerator / frac.denominator
-#         return round(val, 4)
-#     return str(node._content.payload[0])
-# def to_json(node, debug = False):
-#     if debug: print(node, node.get_type(), node.args())
-#     if node.is_real_constant():
-#         type_str = "0_REAL_CONSTANT" #hack to put real constant at the end
-#     else:
-
-#         type_str = pyopt.op_to_str(node.node_type())
-#         if debug:
-#             print("NODE TYPE:", node.node_type())
-#             print("TYPE_STR:", type_str)
-#     if len(node.args())==0:
-#         obj = {"type": type_str, "content":calculate_val(node)}
-#         return obj
-#     else:
-#         args = []
-#         for a in node.args():
-#             args.append(to_json(a, debug))
-#         obj = {"type": type_str, "content": args}
-#         return obj
-    
-    
-# def order_node(node):
-#     args = node["content"]
-#     if isinstance(args, list):
-#         for idx in range(len(args)):
-#             args[idx] = order_node(args[idx])
-#         #only order commutative operators
-#         if node["type"]=="PLUS" or node["type"]=="TIMES" or node["type"]=="AND":
-#             args = sorted(args, key=lambda k: (k["type"], str(k["content"])), reverse = True) 
-#         node["content"] = args
-#     return node
-
-
-spacerWrapper = ms.SpacerWrapper(args.z3Path)
-
-
 
 def startSpacer():
     new_exp_name = get_new_exp_name()
@@ -112,11 +68,28 @@ def startSpacer():
 
     spacerUserOptions = request_params.get("spacerUserOptions", "")
 
-    temporaryFile = open("input_file.smt2", "wb")
-    temporaryFile.write(str.encode(fileContent))
-    temporaryFile.flush() # commit file buffer to disk so that Spacer can access it
+    exp_folder = os.path.join(MEDIA, new_exp_name)
+    os.mkdir(exp_folder)
 
-    # status= spacerWrapper.startIterative(temporaryFile.name, spacerUserOptions)
+    input_file = open(os.path.join(exp_folder, "input_file.smt2"), "wb")
+    input_file.write(str.encode(fileContent))
+    input_file.flush() # commit file buffer to disk so that Spacer can access it
+
+    stderr_file = open(os.path.join(exp_folder, "stderr"), "w")
+    stdout_file = open(os.path.join(MEDIA, "stdout"), "w")
+
+    run_args = [args.z3Path]
+    run_args.extend(spacerUserOptions.split())
+    run_args.extend(options_for_visualization)
+    run_args.append('input_file.smt2')
+    print(run_args)
+
+    with open(os.path.join(exp_folder, "run_cmd"), "w") as f:
+        run_cmd = " ".join(run_args)
+        f.write(run_cmd)
+
+    Popen(run_args, stdin=PIPE, stdout=stdout_file, stderr=stderr_file, cwd = exp_folder)
+
     return json.dumps({'status': "success", 'spacerState': "running", 'nodes_list': {}})
 
 # def replay():
