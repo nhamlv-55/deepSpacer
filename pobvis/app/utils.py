@@ -4,6 +4,7 @@ import sqlite3
 from settings import DATABASE, MEDIA, options_for_visualization
 import json
 from datetime import datetime
+import psutil
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
@@ -73,3 +74,19 @@ def order_node(node):
         node["content"] = args
     return node
 
+def checkIfProcessRunning(processName):
+    '''
+    Check if there is any running process that contains the given name processName.
+    '''
+    #Iterate over the all the running process
+    for proc in psutil.process_iter():
+        try:
+            # Check if process name contains the given name string.
+            cmdline = " ".join(proc.cmdline())
+            if 'z3' in cmdline:
+                print(cmdline)
+            if processName in cmdline:
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    return False;

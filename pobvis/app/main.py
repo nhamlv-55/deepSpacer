@@ -23,6 +23,29 @@ CORS(app)
 parser = argparse.ArgumentParser(description='Run Spacer Server')
 parser.add_argument("-z3", "--z3", required=True, action="store", dest="z3Path", help="path to z3 python")
 args = parser.parse_args()
+
+def updateStatus():
+    exps_list = []
+    for exp in query_db('select * from exp where done is 0'):
+        r = {}
+        for k in exp.keys():
+            r[k] = exp[k]
+        exps_list.append(exp["name"])
+
+    for exp in exps_list:
+        print("EXP:", exp)
+        is_running = checkIfProcessRunning(exp)
+        if not is_running:
+            get_db().execute('UPDATE exp SET done = 1 WHERE name = ?', (exp,));
+
+    #commit
+    get_db().commit()
+
+def pooling():
+    updateStatus()
+    return fetch_exps()
+
+
 def startSpacer():
     request_params = request.get_json()
     fileContent = request_params.get('file', '')
@@ -47,7 +70,7 @@ def startSpacer():
     run_args = [args.z3Path]
     run_args.extend(spacerUserOptions.split())
     run_args.extend(options_for_visualization)
-    run_args.append('input_file.smt2')
+    run_args.append(os.path.abspath(os.path.join(exp_folder, 'input_file.smt2')))
     print(run_args)
 
     with open(os.path.join(exp_folder, "run_cmd"), "w") as f:
@@ -107,7 +130,7 @@ def poke():
 
 @app.route('/spacer/fetch_exps', methods=['POST'])
 def handle_fetch_exps():
-    return fetch_exps()
+    return pooling()
 @app.route('/spacer/startiterative', methods=['POST'])
 def handle_startSpacerIterative():
     return startSpacer()
